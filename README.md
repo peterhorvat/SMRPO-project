@@ -2,4 +2,4 @@
 
 
 ### Zadnje posodobitve:
-* nastavljeni modeli, podrebno dodati polja
+* nastavljeni modeli, potrebno dodatno definirati polja
