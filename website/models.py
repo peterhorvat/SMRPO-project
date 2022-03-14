@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from autoslug import AutoSlugField
 from ckeditor.fields import RichTextField
@@ -21,27 +22,19 @@ class Projekt(models.Model):
 
 
 class Clan(AbstractUser):
-    CLAN_TYPES = (
-        ('a', 'Hola'),
-        ('b', 'Hello'),
-        ('c', 'Bonjour'),
-        ('d', 'Boas'),
-    )
     VLOGA_TYPES = (
-        ('a', 'Hola'),
-        ('b', 'Hello'),
-        ('c', 'Bonjour'),
-        ('d', 'Boas'),
+        (0, 'Product owner'),
+        (1, 'Scrum master'),
+        (2, 'Team member'),
     )
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
-    vloga = models.CharField(max_length=1, choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
+    vloga = models.IntegerField(choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
     username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Username")
     first_name = models.CharField(max_length=30, verbose_name="First name")
     last_name = models.CharField(max_length=150, verbose_name="Last name")
     email = models.EmailField(unique=True, verbose_name="e-Mail")
     slug = AutoSlugField(max_length=255, populate_from='username', default="", null=True, blank=True,
                          verbose_name="Username slug")
-    type = models.CharField(max_length=1, choices=CLAN_TYPES, verbose_name="Tip uporabnika")
     USERNAME_FIELD = "username"
 
     def __str__(self):
@@ -53,6 +46,7 @@ class Clan(AbstractUser):
         unique_together = ["projekt", "username", "vloga"]
 
 
+# Nov sprint se ne more začet dokler se ne konča prejšnji
 class Sprint(models.Model):
     ime = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ime sprinta")
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
@@ -72,18 +66,18 @@ class Sprint(models.Model):
 
 class Zgodba(models.Model):
     PRIORITETE = (
-        ('c', 'Could have'),
-        ('s', 'Should have'),
-        ('m', 'Must have')
+        (3, 'Could have'),
+        (2, 'Should have'),
+        (1, 'Must have'),
+        (-1, "Won't have this time")
     )
-    sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE, verbose_name="Sprint")
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     ime = models.CharField(max_length=255, verbose_name="Ime zgodbe")
-    besedilo = RichTextField(verbose_name="Vsebina zgodbe")
-    sprejemni_tekst = models.CharField(max_length=255, verbose_name="Sprejemni tekst zgodbe")
-    poslovna_vrednost = models.FloatField(verbose_name="Poslovna vrednost zgodbe")
+    vsebina = RichTextField(verbose_name="Vsebina zgodbe")
+    sprejemni_testi = models.CharField(max_length=255, verbose_name="Sprejemni testi zgodbe")
+    poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
+                                            verbose_name="Poslovna vrednost zgodbe")
     prioriteta = models.CharField(max_length=1, choices=PRIORITETE, verbose_name="Vloga pri projektu")
-    cas_zahtevnost = models.FloatField(verbose_name="Ocena časovne zahtevnosti")
     opombe = RichTextField(verbose_name="Opombe zgodbe")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -91,7 +85,6 @@ class Zgodba(models.Model):
     class Meta:
         verbose_name_plural = "Zgodbe"
         verbose_name = "Zgodba"
-        unique_together = ["sprint", "projekt"]
 
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"
@@ -100,13 +93,14 @@ class Zgodba(models.Model):
 class Naloga(models.Model):
 
     PRIORITETE = (
-        (-1, 'Not finished'),
-        (0, 'In progress'),
-        (1, 'Completed')
+        (-1, 'Not assigned'),
+        (0, 'Pending'),
+        (1, 'Accepted'),
+        (2, 'Finished'),
     )
 
     ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime zgodbe")
-    clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
+    clan = models.ForeignKey(Clan, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Član")
     zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE, verbose_name="Zgodba")
     opis = RichTextField(verbose_name="Opis naloge")
     cas = models.FloatField(verbose_name="Ocena časa")
@@ -162,17 +156,31 @@ class Objava(models.Model):
         return f"[{self.zid}:{self.clan}] {self.naslov}"
 
 
+# Je rekel da mora biti nujno ločeno ker je "svoja stvar"
+class DailyScrum(models.Model):
+    have_done = RichTextField(verbose_name="What have you done since the last meeting?")
+    will_do = RichTextField(verbose_name="What are you planning to do until next meeting?")
+    problems = RichTextField(verbose_name="Have you experienced any problems or issues?")
+    zid = models.ForeignKey(Zid, on_delete=models.CASCADE, verbose_name="Zid")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "DailyScrumI"
+        verbose_name = "DailyScrum"
+
+
 class Dokumentacija(models.Model):
     TIPI = (
-        ('c', 'Could have'),
-        ('s', 'Should have'),
-        ('m', 'Must have')
+        (0, 'Uporabniška'),
+        (1, 'Administratorska'),
+        (2, 'Razvijalska')
     )
 
     naslov = models.CharField(max_length=255, null=True, blank=True, verbose_name="Naslov dokumentacije")
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     vsebina = RichTextField(verbose_name="Vsebina"),
-    tip = models.CharField(max_length=1, choices=TIPI, verbose_name="Tip dokumentacije")
+    tip = models.IntegerField(choices=TIPI, verbose_name="Tip dokumentacije")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -184,6 +192,7 @@ class Dokumentacija(models.Model):
         return f"[{self.projekt}:{self.tip}] {self.naslov}"
 
 
+# NOT SURE KJE BOMO TO RABILI HAHA
 class BelezenjeCasa(models.Model):
     clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
     naloga = models.ForeignKey(Naloga, on_delete=models.CASCADE, verbose_name="Naloga")
