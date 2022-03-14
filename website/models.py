@@ -52,7 +52,7 @@ class Sprint(models.Model):
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     zacetni_cas = models.DateTimeField(verbose_name="Začetni čas sprinta")
     koncni_cas = models.DateTimeField(verbose_name="Končni čas sprinta")
-    hitrost = models.FloatField(verbose_name="Predvidena hitrost sprinta")
+    hitrost = models.IntegerField(verbose_name="Predvidena hitrost sprinta")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -74,7 +74,7 @@ class Zgodba(models.Model):
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     ime = models.CharField(max_length=255, verbose_name="Ime zgodbe")
     vsebina = RichTextField(verbose_name="Vsebina zgodbe")
-    sprejemni_testi = models.CharField(max_length=255, verbose_name="Sprejemni testi zgodbe")
+    sprejemni_testi = RichTextField(verbose_name="Sprejemni testi zgodbe")
     poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                             verbose_name="Poslovna vrednost zgodbe")
     prioriteta = models.CharField(max_length=1, choices=PRIORITETE, verbose_name="Vloga pri projektu")
@@ -103,7 +103,7 @@ class Naloga(models.Model):
     clan = models.ForeignKey(Clan, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Član")
     zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE, verbose_name="Zgodba")
     opis = RichTextField(verbose_name="Opis naloge")
-    cas = models.FloatField(verbose_name="Ocena časa")
+    cas = models.IntegerField(verbose_name="Ocena časa")
     status = models.IntegerField(choices=PRIORITETE, verbose_name="Status naloge")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -132,18 +132,8 @@ class Komentar(models.Model):
         return f"[{self.zgodba}:{self.clan}]"
 
 
-class Zid(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural = "Zidovi"
-        verbose_name = "Zid"
-
-
 class Objava(models.Model):
     naslov = models.CharField(max_length=255, null=True, blank=True, verbose_name="Naslov objave")
-    zid = models.ForeignKey(Zid, on_delete=models.CASCADE, verbose_name="Zid")
     clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -153,7 +143,7 @@ class Objava(models.Model):
         verbose_name = "Objava"
 
     def __str__(self):
-        return f"[{self.zid}:{self.clan}] {self.naslov}"
+        return f"[{self.clan}] {self.naslov}"
 
 
 # Je rekel da mora biti nujno ločeno ker je "svoja stvar"
@@ -161,7 +151,6 @@ class DailyScrum(models.Model):
     have_done = RichTextField(verbose_name="What have you done since the last meeting?")
     will_do = RichTextField(verbose_name="What are you planning to do until next meeting?")
     problems = RichTextField(verbose_name="Have you experienced any problems or issues?")
-    zid = models.ForeignKey(Zid, on_delete=models.CASCADE, verbose_name="Zid")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
