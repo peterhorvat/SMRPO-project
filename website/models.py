@@ -7,28 +7,7 @@ from ckeditor.fields import RichTextField
 # Create your models here.
 
 
-class Projekt(models.Model):
-
-    ime = models.CharField(max_length=255, verbose_name="Ime projekta")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural = "Projekti"
-        verbose_name = "Projekt"
-
-    def __str__(self):
-        return f"{self.ime}"
-
-
-class Clan(AbstractUser):
-    VLOGA_TYPES = (
-        (0, 'Product owner'),
-        (1, 'Scrum master'),
-        (2, 'Team member'),
-    )
-    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
-    vloga = models.IntegerField(choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
+class Uporabnik(AbstractUser):
     username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Username")
     first_name = models.CharField(max_length=30, verbose_name="First name")
     last_name = models.CharField(max_length=150, verbose_name="Last name")
@@ -43,7 +22,39 @@ class Clan(AbstractUser):
     class Meta:
         verbose_name_plural = "Uporabniki"
         verbose_name = "Uporabnik"
-        unique_together = ["projekt", "username", "vloga"]
+
+
+class Projekt(models.Model):
+
+    ime = models.CharField(max_length=255, verbose_name="Ime projekta")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Projekti"
+        verbose_name = "Projekt"
+
+    def __str__(self):
+        return f"{self.ime}"
+
+
+class Clan(models.Model):
+    VLOGA_TYPES = (
+        (0, 'Product owner'),
+        (1, 'Scrum master'),
+        (2, 'Team member'),
+    )
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    vloga = models.IntegerField(choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
+    uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
+
+    def __str__(self):
+        return f"[{self.uporabnik}]: {self.projekt}"
+
+    class Meta:
+        verbose_name_plural = "Člani"
+        verbose_name = "Član"
+        unique_together = ["projekt", "vloga"]
 
 
 # Nov sprint se ne more začet dokler se ne konča prejšnji
@@ -148,6 +159,7 @@ class Objava(models.Model):
 
 # Je rekel da mora biti nujno ločeno ker je "svoja stvar"
 class DailyScrum(models.Model):
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     have_done = RichTextField(verbose_name="What have you done since the last meeting?")
     will_do = RichTextField(verbose_name="What are you planning to do until next meeting?")
     problems = RichTextField(verbose_name="Have you experienced any problems or issues?")
