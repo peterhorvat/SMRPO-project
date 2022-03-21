@@ -14,6 +14,7 @@ class Uporabnik(AbstractUser):
     email = models.EmailField(unique=True, verbose_name="e-Mail")
     slug = AutoSlugField(max_length=255, populate_from='username', default="", null=True, blank=True,
                          verbose_name="Username slug")
+    otp_auth = models.BooleanField(default=True, verbose_name="Zahtevana OTP avtentikacija")
     USERNAME_FIELD = "username"
 
     def __str__(self):

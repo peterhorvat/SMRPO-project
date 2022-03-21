@@ -10,6 +10,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"/>
+    <link href='https://fonts.googleapis.com/css?family=Poppins' rel='stylesheet'>
+    <style>
+        body {font-family: 'Poppins', serif;}
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
@@ -21,12 +25,15 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
             {% if request.user.is_superuser %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin:index' %}">Administration</a>
-                </li>
+                {% if request.user.otp_auth %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}">Administration</a>
+                    </li>
+                {% endif %}
             {% endif %}
+            {% if request.user.otp_auth %}
                 <li class="nav-item">
-                    <a class="nav-link" href="#">SITE1</a>
+                    <a class="nav-link" href="#">{{ request.user.username }}</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">SITE2</a>
@@ -34,32 +41,48 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#">SITE3</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="btn btn-dark btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
-                        <i class="bi bi-person-fill"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink" data-bs-popper="none">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi bi-wrench"></i>
-                                <span class="ms-2">Nastavitve</span>
-                            </a>
-                        </li>
-
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                {% if request.user.otp_auth %}
+                    <li class="nav-item dropdown">
+                        <a class="btn btn-dark btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink" data-bs-popper="none">
                             <li>
-                                <a class="dropdown-item" href="#" id="otp">
-                                    <i class="bi bi-shield-lock"></i>
-                                    <span class="ms-2">OTP</span>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-person-lines-fill"></i>
+                                    <span class="ms-2">{{ request.user.username }}</span>
                                 </a>
                             </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi bi-power"></i>
-                                <span class="ms-2">Odjava</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-wrench"></i>
+                                    <span class="ms-2">Nastavitve</span>
+                                </a>
+                            </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="#" id="otp">
+                                        <i class="bi bi-shield-lock"></i>
+                                        <span class="ms-2">OTP</span>
+                                    </a>
+                                </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'logout' %}">
+                                    <i class="bi bi-power"></i>
+                                    <span class="ms-2">Odjava</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Odjava</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+
             </ul>
         </div>
     </div>
@@ -72,6 +95,104 @@
 
 <footer class="sticky-bottom">
     <script>
+        window.Swal = Swal;
+        $('#otp').on('click', function (){
+            Swal.fire({
+            title: '{{ title }}',
+            icon: '{{ icon }}',
+            html: `{{ text |safe }}`,
+            showCloseButton: true,
+
+            {% if activated %}
+                showLoaderOnDeny: true,
+                showDenyButton: true,
+                showConfirmButton: false,
+                denyButtonText: '{{ button2 }}',
+                allowOutsideClick: () => !Swal.isLoading()
+                }).then((result) => {
+                    if (result.isDenied) {
+                        Swal.fire({
+                            title: `Ste prepričani, da želite izklopiti OTP ?`,
+                            icon: 'question',
+                            showCloseButton: true,
+                            showLoaderOnConfirm: true,
+                            allowOutsideClick: () => !Swal.isLoading(),
+                            showConfirmButton: true,
+                            confirmButtonText: 'Da',
+                            showCancelButton: true,
+                            cancelButtonText: 'Prekliči',
+                            preConfirm: () => {
+                                return fetch(`/disableOTP`)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(response.statusText)
+                                    }
+                                    Swal.fire({
+                                        title: `OTP je bil uspešno izklopljen.`,
+                                        icon: 'success',
+                                        showCloseButton: true,
+                                        allowOutsideClick: true,
+                                        didDestroy: () => {
+                                            location.reload();
+                                        }
+                                    })
+                                    return response.json()
+                                })
+                                .catch(error => {
+                                    Swal.showValidationMessage(
+                                        `Napaka: ${error}`
+                                    )
+                                })
+                            }
+                        })
+                    }
+                })
+            {% else %}
+                showLoaderOnConfirm: true,
+                showConfirmButton: true,
+                confirmButtonText: '{{ button1 }}',
+                input: 'text',
+                inputPlaceholder: "Vnesite veljavno 6 mestno kodo",
+                inputAttributes: {
+                    maxlength: 6
+                },
+                preConfirm: (value)=> {
+                    return fetch(`/createOTP/`,{
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(
+                            {'code': value}
+                        )
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText)
+                            }
+                            Swal.fire({
+                                title: `OTP je bil uspešno vklopljen.`,
+                                icon: 'success',
+                                showCloseButton: true,
+                                allowOutsideClick: true,
+                                didDestroy: () => {
+                                    location.reload();
+                                }
+                            })
+                            return response.json()
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                `Napaka: ${error}`
+                            )
+                        })
+                }
+                })
+            {% endif %}
+
+        })
         $(window).scroll(function () {
             if ($(this).scrollTop() > 50) {
                 $("#back-to-top").fadeIn();

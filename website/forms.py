@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Uporabnik, Projekt
 from django.forms import ModelForm
@@ -22,3 +23,8 @@ class CreateNewProjectForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CreateNewProjectForm, self).__init__(*args, **kwargs)
         self.fields['ime'].label = "Ime projekta"
+
+
+class OTPForm(forms.Form):
+    otp_code = forms.CharField(max_length=10, label="OTP koda", help_text="Vnesite OTP kodo iz avtentikatorja",
+                               widget=forms.TextInput(attrs={'autocomplete': 'off', 'autofocus': ''}))

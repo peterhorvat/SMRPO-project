@@ -8,11 +8,12 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm
+from .forms import UserLoginForm, CreateNewProjectForm,OTPForm
 from .models import Uporabnik, Projekt
 
 
-@login_required(login_url='/login')
+
+@login_required
 def landing_page(request):
     projekti = Projekt.objects.all()
     uporabniki = Uporabnik.objects.all()
@@ -44,7 +45,12 @@ def login_page(request):
         print("User: ", user)
         if user is not None:
             login(request, user)
-            return redirect("/")
+            if TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
+                user.otp_auth = False
+                user.save()
+                return redirect("loginOTP")
+            else:
+                return redirect("landing_page")
         else:
             return render(request, "login_page.html", context={"form": UserLoginForm, "error": "Uporabniško ime in/ali geslo je napačno."})
 
@@ -56,7 +62,7 @@ def createOTP(request):
         device.confirmed = True
         device.save()
 
-        if django_otp.match_token(request.user, "code_here"):
+        if django_otp.match_token(request.user, str(json.loads(request.body.decode('utf-8'))['code'])):
             return HttpResponse(content=json.dumps({"status": True}),
                                 content_type="application/json",
                                 status=status.HTTP_201_CREATED)
@@ -84,3 +90,19 @@ def disableOTP(request):
         return HttpResponse(content=json.dumps({"status": False}),
                             content_type="application/json",
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@login_required
+def loginOTP(request):
+    if request.method == "POST":
+        form = OTPForm(data=request.POST)
+        if form.is_valid():
+            if django_otp.match_token(request.user, form.cleaned_data.get('otp_code')):
+                user = request.user
+                user.otp_auth = True
+                user.save()
+                return redirect("landing_page")
+            else:
+                return redirect("loginOTP")
+    form = OTPForm()
+    return render(request=request, template_name="otp_login.html", context={"form": form})
+
