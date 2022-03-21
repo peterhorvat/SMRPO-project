@@ -26,4 +26,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('', v.landing_page, name='landing_page'),
+    path('login/', v.login, name='login_page')
 ]

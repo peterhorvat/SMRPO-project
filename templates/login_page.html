@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block content %}
+    <div class="d-flex justify-content-center ">
+        <form method="POST" class="form-group">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4 mt-4 text-center">Prijava</legend>
+                {{ form|crispy }}
+                <p class="text-right small" style="font-size: 70%; padding-right: 5px"> <i>* Označena polja so obvezna.</i></p>
+                {% if error %}
+                    <p class="text-right small" style="font-size: 70%; padding-right: 5px"> <i>{{ error }}</i></p>
+                {% endif %}
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit">Prijavi se</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == "error" %}
+                <script>Swal.fire({
+                    title: '{{ message }}',
+                    text: 'Uporabniško ime ali geslo ni pravilno',
+                    icon: 'error',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Zapri',
+                    timer: 2500});
+                </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endblock %}
