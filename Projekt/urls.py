@@ -28,6 +28,8 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('', v.landing_page, name='landing_page'),
     path('login/', v.login_page, name='login_page'),
+    path("create_new_project/", v.create_new_project, name='create_new_project'),
+    path("delete_project/<int:id>", v.delete_project, name='delete_project'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('createOTP/', v.createOTP, name='createOTP'),
     path('disableOTP/', v.disableOTP, name='disableOTP'),

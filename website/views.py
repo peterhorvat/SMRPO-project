@@ -8,14 +8,31 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, OTPForm
-from .models import Uporabnik
+from .forms import UserLoginForm, CreateNewProjectForm,OTPForm
+from .models import Uporabnik, Projekt
+
 
 
 @login_required
 def landing_page(request):
-    context_example = "TEST"
-    return render(request, 'landing_page.html', context={"exmp1": context_example})
+    projekti = Projekt.objects.all()
+    uporabniki = Uporabnik.objects.all()
+    return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
+        "projekt_form": CreateNewProjectForm()
+    }})
+
+
+@login_required(login_url='/login')
+def create_new_project(request):
+    new_project = request.POST["ime"]
+    Projekt.objects.create(ime=new_project).save()
+    return redirect("/")
+
+
+@login_required(login_url='/login')
+def delete_project(request, id):
+    Projekt.objects.filter(id=id).delete()
+    return redirect("/")
 
 
 def login_page(request):
@@ -36,8 +53,6 @@ def login_page(request):
                 return redirect("landing_page")
         else:
             return render(request, "login_page.html", context={"form": UserLoginForm, "error": "Uporabniško ime in/ali geslo je napačno."})
-
-
 
 
 @login_required
