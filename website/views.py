@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 import django_otp
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -18,16 +18,17 @@ def landing_page(request):
     return render(request, 'landing_page.html', context={"exmp1": context_example})
 
 
-def login(request):
+def login_page(request):
     if request.method == "GET":
         return render(request, "login_page.html", context={"form": UserLoginForm})
     else:
         username = request.POST["username"]
         password = request.POST["password"]
         user = authenticate(request, username=username, password=password)
+        print("User: ", user)
         if user is not None:
             login(request, user)
-            redirect("/")
+            return redirect("/")
         else:
             return render(request, "login_page.html", context={"form": UserLoginForm, "error": "Uporabniško ime in/ali geslo je napačno."})
 
