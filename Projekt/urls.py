@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 from rest_framework import routers
 from website import views as v
 
@@ -26,5 +27,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('', v.landing_page, name='landing_page'),
-    path('login/', v.login_page, name='login_page')
+    path('login/', v.login_page, name='login_page'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('createOTP/', v.createOTP, name='createOTP'),
+    path('disableOTP/', v.disableOTP, name='disableOTP'),
+    path('loginOTP/', v.loginOTP, name='loginOTP')
 ]
