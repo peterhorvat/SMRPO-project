@@ -1,8 +1,44 @@
 {% extends "base.html" %}
-
+{% load crispy_forms_filters %}
 {% block content %}
-    HTML CODE HERE
-    {{ exmp1 }}
+    <div style="padding: 10px">
+        <h1>Projekti</h1>
+        <div class="d-flex" style="flex-direction: column; padding: 10px">
+            {% for projekt in projekti %}
+                <div class="d-flex text-center align-items-baseline">
+                    <h5 style="margin-right: 5px">{{ projekt.ime }}</h5>
+                    <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="modal fade" tabindex="-1" id="addNewProject" aria-labelledby="addNewProject" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Ustvari novi projekt</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" class="form-group" id="createNewProjectForm" action="/create_new_project/">
+                            {% csrf_token %}
+                            <fieldset class="form-group">
+                                {{ forms.projekt_form|crispy }}
+                                <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
+                            </fieldset>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" form="createNewProjectForm" class="btn btn-success">Ustvari novi projekt</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if request.user.is_superuser %}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addNewProject">Nov projekt</button>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block scripts %}
