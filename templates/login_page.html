@@ -8,6 +8,10 @@
                 <fieldset class="form-group">
                     <legend class="border-bottom mb-4 mt-4 text-center">Prijava</legend>
                     {{ form|crispy }}
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="" id="passwordCheckbox" onclick="toggleVisibility()">
+                      <label class="form-check-label" for="passwordCheckbox"> Prikaži geslo</label>
+                    </div>
                     <p class="text-right small" style="font-size: 70%; padding-right: 5px"> <i>* Označena polja so obvezna.</i></p>
                     {% if error %}
                         <p class="text-right small" style="font-size: 70%; padding-right: 5px"> <i>{{ error }}</i></p>
@@ -36,4 +40,14 @@
             {% endif %}
         {% endfor %}
     {% endif %}
+    <script>
+        function toggleVisibility() {
+              var x = document.getElementById("id_password");
+              if (x.type === "password") {
+                x.type = "text";
+              } else {
+                x.type = "password";
+              }
+        }
+    </script>
 {% endblock %}
