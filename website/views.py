@@ -28,7 +28,7 @@ def create_new_project(request):
     project = Projekt.objects.create(ime=new_project)
     project.save()
 
-    Clan.objects.create(projekt=project, uporabnik=request.user, vloga=0).save()
+    Clan.objects.create(projekt=project, uporabnik=request.user, vloga=Clan.PRODUCT_OWNER).save()
     return redirect("/")
 
 
@@ -113,16 +113,13 @@ def loginOTP(request):
 @login_required
 def project_page(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
-    stories = Zgodba.objects.select_related().filter(projekt=project)
-    clan = Clan.objects.select_related().get(uporabnik=request.user)
+    stories = Zgodba.objects.filter(projekt=project)
+    clan = Clan.objects.get(uporabnik=request.user)
 
     context = {
         'projekt' : project,
         'zgodbe' : stories,
         'clan' : clan,
-        'forms' : {
-            'zgodba_form' : NewZgodbaForm()
-        }
     }
 
     return render(request=request, template_name="project_page.html", context=context)

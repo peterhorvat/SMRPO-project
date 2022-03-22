@@ -38,10 +38,13 @@ class Projekt(models.Model):
 
 
 class Clan(models.Model):
+    PRODUCT_OWNER = 0
+    SCRUM_MASTER = 1
+    TEAM_MEMBER = 2
     VLOGA_TYPES = (
-        (0, 'Product owner'),
-        (1, 'Scrum master'),
-        (2, 'Team member'),
+        (PRODUCT_OWNER, 'Product owner'),
+        (SCRUM_MASTER, 'Scrum master'),
+        (TEAM_MEMBER, 'Team member'),
     )
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     vloga = models.IntegerField(choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
@@ -75,11 +78,15 @@ class Sprint(models.Model):
 
 
 class Zgodba(models.Model):
+    COULD_HAVE = 3
+    SHOULD_HAVE = 2
+    MUST_HAVE = 1
+    WONT_HAVE = -1
     PRIORITETE = (
-        (3, 'Could have'),
-        (2, 'Should have'),
-        (1, 'Must have'),
-        (-1, "Won't have this time")
+        (COULD_HAVE, 'Could have'),
+        (SHOULD_HAVE, 'Should have'),
+        (MUST_HAVE, 'Must have'),
+        (WONT_HAVE, "Won't have this time")
     )
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
     ime = models.CharField(max_length=255, verbose_name="Ime zgodbe")
@@ -101,12 +108,15 @@ class Zgodba(models.Model):
 
 
 class Naloga(models.Model):
-
+    NOT_ASSIGNED = -1
+    PENDING = 0
+    ACCEPTED = 1
+    FINISHED = 2
     PRIORITETE = (
-        (-1, 'Not assigned'),
-        (0, 'Pending'),
-        (1, 'Accepted'),
-        (2, 'Finished'),
+        (NOT_ASSIGNED, 'Not assigned'),
+        (PENDING, 'Pending'),
+        (ACCEPTED, 'Accepted'),
+        (FINISHED, 'Finished'),
     )
 
     ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime zgodbe")
@@ -171,10 +181,13 @@ class DailyScrum(models.Model):
 
 
 class Dokumentacija(models.Model):
+    UPORABNISKA = 0
+    ADMINISTRATORSKA = 1
+    RAZVIJALSKA = 2
     TIPI = (
-        (0, 'Uporabniška'),
-        (1, 'Administratorska'),
-        (2, 'Razvijalska')
+        (UPORABNISKA, 'Uporabniška'),
+        (ADMINISTRATORSKA, 'Administratorska'),
+        (RAZVIJALSKA, 'Razvijalska')
     )
 
     naslov = models.CharField(max_length=255, null=True, blank=True, verbose_name="Naslov dokumentacije")

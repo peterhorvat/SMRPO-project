@@ -35,7 +35,7 @@ class OTPForm(forms.Form):
 class NewZgodbaForm(ModelForm):
     def clean_ime(self):
         ime = self.cleaned_data['ime']
-        if Zgodba.objects.get(ime=ime) is not None:
+        if len(Zgodba.objects.filter(ime=ime)) > 0:
             raise ValidationError("Zgodba s tem imenom že obstaja")
         return ime
     class Meta:

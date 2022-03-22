@@ -3,25 +3,28 @@
 {% block content %}
     <div style="padding: 10px">
         <h1>{{ projekt.ime }}</h1>
-        <ul class="list-group">
+        <div>
             {% for zgodba in zgodbe %}
-                <li class="list-group-item">
-                    <h3 style="margin-right: 5px">{{ zgodba.ime }}</h3> <br />
-                    <div>
-                        <h5>Vsebina:</h5>
-                        <p>{{ zgodba.vsebina }}</p>
-                        <h5>Sprejemni testi:</h5>
-                        <p>{{ zgodba.sprejemni_testi }}</p>
-                        <h5>Poslovna vrednost: {{ zgodba.poslovna_vrednost }}</h5>
-                        <h5>Prioriteta: {{ zgodba.prioriteta }}</h5>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" style="margin-right: 5px">{{ zgodba.ime }}</h3>
                     </div>
-                </li>
+                    <div class="card-body">
+                        <h5>Vsebina:</h5>
+                        <p class="card-text">{{ zgodba.vsebina }}</p>
+                        <h5>Sprejemni testi:</h5>
+                        <p class="card-text">{{ zgodba.sprejemni_testi }}</p>
+                        <p class="card-text">Poslovna vrednost: {{ zgodba.poslovna_vrednost }}</p>
+                        <p class="card-text">Prioriteta: {{ zgodba.get_prioriteta_display }}</p>
+                    </div>
+                </div>
+                <br />
             {% endfor %}
-        </ul>
-        <br/>
-        {% if clan.vloga == 0 or clan.vloga == 1 %}
-            <a class="btn btn-success" href="stories/new/">Nova uporabniška zgodba</a>
-        {% endif %}
+            <br/>
+            {% if clan.vloga == 0 or clan.vloga == 1 %}
+                <a class="btn btn-success" href="stories/new/">Nova uporabniška zgodba</a>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
 
