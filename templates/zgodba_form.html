@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    <div id="main" class="container">
+        <div class="cols-sm-2 col-md-6 col-lg-6">
+            <h3>Projekt: {{ projekt.ime }}</h3>
+
+            <h4>Ustvari novo uporabniško zgodbo</h4>
+
+            <form action="" method="post">
+                {% csrf_token %}
+                <fieldset class="form-group">
+                    {{ form|crispy }}
+                    <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
+                </fieldset>
+                <input type="submit" class="btn btn-success" value="Ustvari">
+            </form>
+        </div>
+    </div>
+{% endblock %}

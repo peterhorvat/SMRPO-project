@@ -33,5 +33,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('createOTP/', v.createOTP, name='createOTP'),
     path('disableOTP/', v.disableOTP, name='disableOTP'),
-    path('loginOTP/', v.loginOTP, name='loginOTP')
+    path('loginOTP/', v.loginOTP, name='loginOTP'),
+    path('projects/<int:project_id>/', v.project_page, name = 'project_page'),
+    path('projects/<int:project_id>/stories/new/', v.new_story, name='create_story'),
 ]

@@ -6,7 +6,7 @@
         <div class="d-flex" style="flex-direction: column; padding: 10px">
             {% for projekt in projekti %}
                 <div class="d-flex text-center align-items-baseline">
-                    <h5 style="margin-right: 5px">{{ projekt.ime }}</h5>
+                    <h5 style="margin-right: 5px"><a href="/projects/{{ projekt.id }}">{{ projekt.ime }}</a></h5>
                     <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
                     </button>
                 </div>

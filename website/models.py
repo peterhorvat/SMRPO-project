@@ -4,8 +4,6 @@ from django.db import models
 from autoslug import AutoSlugField
 from ckeditor.fields import RichTextField
 
-# Create your models here.
-
 
 class Uporabnik(AbstractUser):
     username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Username")
@@ -89,7 +87,7 @@ class Zgodba(models.Model):
     sprejemni_testi = RichTextField(verbose_name="Sprejemni testi zgodbe")
     poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                             verbose_name="Poslovna vrednost zgodbe")
-    prioriteta = models.CharField(max_length=1, choices=PRIORITETE, verbose_name="Vloga pri projektu")
+    prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Vloga pri projektu")
     opombe = RichTextField(verbose_name="Opombe zgodbe")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -5,11 +5,11 @@ import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm,OTPForm
-from .models import Uporabnik, Projekt
+from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm
+from .models import Uporabnik, Projekt, Zgodba, Clan
 
 
 
@@ -25,7 +25,10 @@ def landing_page(request):
 @login_required(login_url='/login')
 def create_new_project(request):
     new_project = request.POST["ime"]
-    Projekt.objects.create(ime=new_project).save()
+    project = Projekt.objects.create(ime=new_project)
+    project.save()
+
+    Clan.objects.create(projekt=project, uporabnik=request.user, vloga=0).save()
     return redirect("/")
 
 
@@ -106,3 +109,42 @@ def loginOTP(request):
     form = OTPForm()
     return render(request=request, template_name="otp_login.html", context={"form": form})
 
+
+@login_required
+def project_page(request, project_id):
+    project = get_object_or_404(Projekt, pk=project_id)
+    stories = Zgodba.objects.select_related().filter(projekt=project)
+    clan = Clan.objects.select_related().get(uporabnik=request.user)
+
+    context = {
+        'projekt' : project,
+        'zgodbe' : stories,
+        'clan' : clan,
+        'forms' : {
+            'zgodba_form' : NewZgodbaForm()
+        }
+    }
+
+    return render(request=request, template_name="project_page.html", context=context)
+
+
+@login_required
+def new_story(request, project_id):
+    project = get_object_or_404(Projekt, pk=project_id)
+
+    if request.method == 'POST':
+        story_form = NewZgodbaForm(request.POST)
+        if story_form.is_valid():
+            story_instance = story_form.save(commit=False)
+            story_instance.projekt = project
+            story_instance.save()
+            print(story_instance)
+            return redirect(f'/projects/{project_id}')
+    else:
+        story_form = NewZgodbaForm()
+
+    context = {
+        'form': story_form,
+        'projekt': project,
+    }
+    return render(request, 'zgodba_form.html', context)
