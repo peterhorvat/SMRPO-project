@@ -71,7 +71,6 @@
         var form = $("form")[0];
         form.addEventListener("submit", function (event) {
             event.preventDefault();
-
             $.post(form.action, $(this).serialize())
                 .done(function (){
                     location.reload();

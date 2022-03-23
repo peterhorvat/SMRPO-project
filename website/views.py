@@ -4,6 +4,7 @@ from datetime import datetime
 import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from psycopg2._json import Json
@@ -137,8 +138,9 @@ def new_story(request, project_id):
             story_instance = story_form.save(commit=False)
             story_instance.projekt = project
             story_instance.save()
-            print(story_instance)
             return redirect(f'/projects/{project_id}')
+        else:
+            raise ValidationError("Ime že obstaja")
     else:
         story_form = NewZgodbaForm()
 
@@ -158,7 +160,6 @@ def delete_story(request, project_id, story_id):
 @login_required
 def update_story(request, project_id, story_id):
     temp = Zgodba.objects.filter(ime=request.POST["ime"])
-    print(temp)
     if len(temp) > 0 and temp[0].id != story_id:
         return JsonResponse("To ime že obstaja!", status=400)
     Zgodba.objects.filter(id=story_id).update(ime=request.POST["ime"], vsebina=request.POST["vsebina"], sprejemni_testi=request.POST["sprejemni_testi"],
