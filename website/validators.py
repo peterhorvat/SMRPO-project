@@ -11,3 +11,11 @@ class CustomPasswordValidator:
     def get_help_text(self):
         return "Geslo ne sme biti eno izmed pogosto uporabljenih gesel"
 
+
+class MaxLengthPasswordValidator:
+    def validate(self, password, user=None):
+        if len(password) > 128:
+            raise ValidationError("Geslo ne sme biti daljše od 128 znakov")
+
+    def get_help_text(self):
+        return "Geslo ne sme biti daljše od 128 znakov"
