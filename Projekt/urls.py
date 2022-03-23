@@ -34,6 +34,8 @@ urlpatterns = [
     path('createOTP/', v.createOTP, name='createOTP'),
     path('disableOTP/', v.disableOTP, name='disableOTP'),
     path('loginOTP/', v.loginOTP, name='loginOTP'),
-    path('projects/<int:project_id>/', v.project_page, name = 'project_page'),
+    path('projects/<int:project_id>/', v.project_page, name='project_page'),
     path('projects/<int:project_id>/stories/new/', v.new_story, name='create_story'),
+    path('projects/<int:project_id>/stories/delete/<int:story_id>/', v.delete_story, name='delete_story'),
+    path('projects/<int:project_id>/stories/<int:story_id>/', v.update_story, name='update_story'),
 ]

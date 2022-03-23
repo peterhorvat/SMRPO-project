@@ -1,13 +1,26 @@
 {% extends "base.html" %}
 {% load crispy_forms_filters %}
 {% block content %}
+    {% if error %}
+        <script>
+            window.alert({{ error }})
+        </script>
+    {% endif %}
     <div style="padding: 10px">
-        <h1>{{ projekt.ime }}</h1>
+        <h1>Projekt: {{ projekt.ime }}</h1>
         <div>
             {% for zgodba in zgodbe %}
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                         <h3 class="card-title" style="margin-right: 5px">{{ zgodba.ime }}</h3>
+                        <div class="d-flex">
+                            <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Ime="{{ zgodba.ime }}" data-bs-Vsebina="{{ zgodba.vsebina }}"
+                                    data-bs-SprejemniTesti="{{ zgodba.sprejemni_testi }}" data-bs-Vrednost="{{ zgodba.poslovna_vrednost }}"
+                                    data-bs-Prioritety="{{ zgodba.get_prioriteta_display }}" data-bs-Gumb="Posodobi zgodbo" data-bs-Action="stories/{{ zgodba.id }}/">
+                                <span><i class="fas fa-edit" style="color: gray"></i></span>
+                            </button>
+                            <button class="btn" onclick="confirmDelete({{ zgodba.id }})"><span><i class="fas fa-times" style="color: red"></i></span></button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <h5>Vsebina:</h5>
@@ -18,15 +31,78 @@
                         <p class="card-text">Prioriteta: {{ zgodba.get_prioriteta_display }}</p>
                     </div>
                 </div>
-                <br />
+                <br/>
             {% endfor %}
             <br/>
+            <div class="modal fade" tabindex="-1" id="addNewStory" aria-labelledby="addNewStory" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Ustvari novo zgodbo</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" class="form-group" id="createNewStoryForm" action="">
+                                {% csrf_token %}
+                                <fieldset class="form-group">
+                                    {{ form|crispy }}
+                                    <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
+                                </fieldset>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" form="createNewStoryForm" class="btn btn-success"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% if clan.vloga == 0 or clan.vloga == 1 %}
-                <a class="btn btn-success" href="stories/new/">Nova uporabniška zgodba</a>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo" data-bs-Action="stories/new/" >Nova uporabniška zgodba</button>
             {% endif %}
         </div>
     </div>
 {% endblock %}
 
 {% block scripts %}
+    <script>
+        var modal = document.getElementById("addNewStory");
+        modal.addEventListener("show.bs.modal", fillForm);
+        var form = $("form")[0];
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            $.post(form.action, $(this).serialize())
+                .done(function (){
+                    location.reload();
+                })
+                .fail(function (jqXHR, textStatus) {
+                    alert("To ime že obstaja!");
+                });
+
+        });
+        function confirmDelete(id) {
+            if (confirm("Želite izbrisati zgodbo ?")) {
+                window.location.replace("stories/delete/" + id+"/");
+            }
+        }
+
+        function fillForm(event) {
+            var button = event.relatedTarget;
+            var modal = document.getElementById("addNewStory");
+            var values = [button.getAttribute("data-bs-Ime"), button.getAttribute("data-bs-Vsebina"), button.getAttribute("data-bs-SprejemniTesti"), button.getAttribute("data-bs-Vrednost"), button.getAttribute("data-bs-Prioritety")]
+            var modalBodyInput = modal.querySelectorAll('fieldset  input, fieldset  textarea');
+            console.log(modalBodyInput);
+            modalBodyInput[0].value = values[0];
+            modalBodyInput[1].value = values[1];
+            modalBodyInput[2].value = values[2];
+            modalBodyInput[3].value = parseInt(values[3]);
+            $("select option").filter(function() {
+                //may want to use $.trim in here
+                return $(this).text() === values[4];
+            }).prop('selected', true);
+            $("button[type='submit']")[0].innerText = button.getAttribute("data-bs-Gumb");
+            form.action = button.getAttribute("data-bs-Action");
+        }
+    </script>
 {% endblock %}

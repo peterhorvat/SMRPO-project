@@ -4,13 +4,13 @@ from datetime import datetime
 import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
+from psycopg2._json import Json
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan
-
 
 
 @login_required
@@ -94,6 +94,7 @@ def disableOTP(request):
                             content_type="application/json",
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @login_required
 def loginOTP(request):
     if request.method == "POST":
@@ -117,9 +118,10 @@ def project_page(request, project_id):
     clan = Clan.objects.get(uporabnik=request.user)
 
     context = {
-        'projekt' : project,
-        'zgodbe' : stories,
-        'clan' : clan,
+        'projekt': project,
+        'zgodbe': stories,
+        'clan': clan,
+        'form': NewZgodbaForm()
     }
 
     return render(request=request, template_name="project_page.html", context=context)
@@ -145,3 +147,22 @@ def new_story(request, project_id):
         'projekt': project,
     }
     return render(request, 'zgodba_form.html', context)
+
+
+@login_required
+def delete_story(request, project_id, story_id):
+    Zgodba.objects.filter(id=story_id).delete()
+    return redirect("/projects/" + str(project_id))
+
+
+@login_required
+def update_story(request, project_id, story_id):
+    temp = Zgodba.objects.filter(ime=request.POST["ime"])
+    print(temp)
+    if len(temp) > 0 and temp[0].id != story_id:
+        return JsonResponse("To ime že obstaja!", status=400)
+    Zgodba.objects.filter(id=story_id).update(ime=request.POST["ime"], vsebina=request.POST["vsebina"], sprejemni_testi=request.POST["sprejemni_testi"],
+                                              poslovna_vrednost=request.POST["poslovna_vrednost"],
+                                              prioriteta=request.POST["prioriteta"]
+                                              )
+    return redirect("/projects/" + str(project_id))
