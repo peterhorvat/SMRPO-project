@@ -7,10 +7,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
-from psycopg2._json import Json
+# from psycopg2._json import Json
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm
+from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, NewUporabnikForm
 from .models import Uporabnik, Projekt, Zgodba, Clan
 
 
@@ -56,7 +56,8 @@ def login_page(request):
             else:
                 return redirect("landing_page")
         else:
-            return render(request, "login_page.html", context={"form": UserLoginForm, "error": "Uporabniško ime in/ali geslo je napačno."})
+            return render(request, "login_page.html",
+                          context={"form": UserLoginForm, "error": "Uporabniško ime in/ali geslo je napačno."})
 
 
 @login_required
@@ -162,8 +163,43 @@ def update_story(request, project_id, story_id):
     temp = Zgodba.objects.filter(ime=request.POST["ime"])
     if len(temp) > 0 and temp[0].id != story_id:
         return JsonResponse("To ime že obstaja!", status=400)
-    Zgodba.objects.filter(id=story_id).update(ime=request.POST["ime"], vsebina=request.POST["vsebina"], sprejemni_testi=request.POST["sprejemni_testi"],
+    Zgodba.objects.filter(id=story_id).update(ime=request.POST["ime"], vsebina=request.POST["vsebina"],
+                                              sprejemni_testi=request.POST["sprejemni_testi"],
                                               poslovna_vrednost=request.POST["poslovna_vrednost"],
                                               prioriteta=request.POST["prioriteta"]
                                               )
     return redirect("/projects/" + str(project_id))
+
+
+@login_required
+def update_user(request):
+    # dictionary for initial data with
+    # field names as keys
+    context = {}
+
+    current_user = request.user
+
+    # fetch the object related to passed id
+    obj = get_object_or_404(Uporabnik, id=current_user.id)
+
+    # pass the object as instance in form
+    form = NewUporabnikForm(request.POST or None, instance=obj, initial={'password': ''})
+
+    # save the data from the form and
+    # redirect to detail_view
+    if form.is_valid():
+        Uporabnik.objects.filter(pk=current_user.id).update(
+            username=request.POST["username"],
+            first_name=request.POST["first_name"],
+            last_name=request.POST["last_name"],
+            email=request.POST["email"],
+            otp_auth=True)
+        if form.data['password']:
+            user = Uporabnik.objects.get(username=request.POST["username"])
+            user.set_password(request.POST["password"])
+            user.save()
+
+    # add form dictionary to context
+    context["form"] = form
+
+    return render(request, "uporabnik_form.html", context)

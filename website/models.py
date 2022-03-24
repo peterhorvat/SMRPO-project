@@ -7,8 +7,8 @@ from ckeditor.fields import RichTextField
 
 class Uporabnik(AbstractUser):
     username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Username")
-    first_name = models.CharField(max_length=30, verbose_name="First name")
-    last_name = models.CharField(max_length=150, verbose_name="Last name")
+    first_name = models.CharField(max_length=30, verbose_name="First name", editable=True)
+    last_name = models.CharField(max_length=150, verbose_name="Last name", editable=True)
     email = models.EmailField(unique=True, verbose_name="e-Mail")
     slug = AutoSlugField(max_length=255, populate_from='username', default="", null=True, blank=True,
                          verbose_name="Username slug")
