@@ -11,13 +11,12 @@
                <h1>Projekt: {{ projekt.ime }}</h1>
            {% if clan.vloga == 0 or clan.vloga == 1 %}
                 <button class="btn pull-right btn-success text-right float-right " data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo" data-bs-Action="stories/new/" >
-                   <i class="fa fa-plus-square"></i> Dodaj zgodbo
+                   <i class="fa fa-plus"></i> Dodaj zgodbo
                 </button>
             {% endif %}
         </div>
 
         <div>
-
             {% for zgodba in zgodbe %}
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">

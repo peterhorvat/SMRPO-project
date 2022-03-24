@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 # from psycopg2._json import Json
+from psycopg2.extensions import JSON
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, NewUporabnikForm
@@ -23,19 +24,29 @@ def landing_page(request):
     }})
 
 
-@login_required(login_url='/login')
+@login_required
 def create_new_project(request):
-    new_project = request.POST["ime"]
-    project = Projekt.objects.create(ime=new_project)
+    if str(request.POST["ime"]).strip() == "":
+        return JsonResponse({"data": "Ime ne sme biti prazno.", "status": 400})
+    elif Projekt.objects.filter(ime=request.POST["ime"]).count() > 0:
+        return JsonResponse({"data": "Projekt s tem imenom ze obstaja.", "status": 400})
+    project = Projekt.objects.create(ime=request.POST["ime"])
     project.save()
+    return JsonResponse({"data": "Ok", "status": 200, "project_id": project.id})
 
-    Clan.objects.create(projekt=project, uporabnik=request.user, vloga=Clan.PRODUCT_OWNER).save()
+
+@login_required
+def delete_project(request, id):
+    Projekt.objects.filter(id=id).delete()
     return redirect("/")
 
 
-@login_required(login_url='/login')
-def delete_project(request, id):
-    Projekt.objects.filter(id=id).delete()
+def create_new_clan(request, project_id):
+    project = Projekt.objects.get(pk=project_id)
+    clani = json.loads(request.POST["selected"])
+    for clan in clani:
+        new_clan = Clan(projekt=project, uporabnik=Uporabnik.objects.get(pk=int(clan['user_id'])), vloga=int(clan['user_role']))
+        new_clan.save()
     return redirect("/")
 
 

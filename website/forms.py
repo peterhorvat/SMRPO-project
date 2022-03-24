@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Uporabnik, Projekt, Zgodba
+from .models import Uporabnik, Projekt, Zgodba, Clan
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 
@@ -45,6 +45,7 @@ class NewZgodbaForm(ModelForm):
             'poslovna_vrednost': forms.NumberInput(attrs={'min': 0, 'max': 10})
         }
 
+
 class NewUporabnikForm(ModelForm):
     def __init__(self, *args, **kwargs):
         # first call parent's constructor
@@ -55,14 +56,13 @@ class NewUporabnikForm(ModelForm):
     def clean_username(self):
         ime = self.cleaned_data['username']
         if len(Zgodba.objects.filter(ime=ime)) > 0:
-                raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
+            raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
         return ime
 
     class Meta:
         model = Uporabnik
-        fields = ['username','password', 'first_name', 'last_name', 'email', 'otp_auth']
-        #help_texts = {'poslovna_vrednost': 'Vnesite število med 0 in 10.'}
+        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'otp_auth']
+        # help_texts = {'poslovna_vrednost': 'Vnesite število med 0 in 10.'}
         widgets = {
             'password': forms.PasswordInput(render_value=True),
         }
-

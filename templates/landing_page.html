@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load crispy_forms_filters %}
 {% block content %}
-    <div style="padding: 10px">
+    <div style="padding: 10px; width: 40%">
         <h1>Projekti</h1>
-        <div class="d-flex" style="flex-direction: column; padding: 10px">
+        <div class="d-flex" style="flex-direction: column; padding: 10px; ">
             {% for projekt in projekti %}
-                <div class="d-flex text-center align-items-baseline">
+                <div class="d-flex text-center align-items-baseline" style="justify-content: space-between; padding: 10px">
                     <h5 style="margin-right: 5px"><a href="/projects/{{ projekt.id }}">{{ projekt.ime }}</a></h5>
                     <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
                     </button>
@@ -27,10 +27,29 @@
                                 <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
                             </fieldset>
                         </form>
+                        <form method="POST" class="form-group" id="addNewContributorsForm" action="/create_new_contributors/">
+                            {% csrf_token %}
+                            <div style="border: 1px lightgrey solid; padding: 10px">
+                                {% for uporabnik in uporabniki %}
+                                    <div class="d-flex" style="justify-content: space-between; padding: 10px">
+                                        <div class="form-group d-flex" style="align-items: center ; width: 30%; justify-content: space-between;" onclick="checkCheckbox(this)">
+                                            <input type="checkbox" value="{{ uporabnik.id }}">
+                                            <label>{{ uporabnik.username }}</label>
+                                        </div>
+                                        <select class="form-select" style="width: 50%">
+                                            <option value="0"> Team member</option>
+                                            <option value="1"> Scrum master</option>
+                                            <option value="2"> Product owner</option>
+                                        </select>
+                                    </div>
+
+                                {% endfor %}
+                            </div>
+                        </form>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" form="createNewProjectForm" class="btn btn-success">Ustvari novi projekt</button>
+                        <button type="button" onclick="submitForms()" class="btn btn-success">Ustvari novi projekt</button>
                     </div>
                 </div>
             </div>
@@ -42,4 +61,37 @@
 {% endblock %}
 
 {% block scripts %}
+    <script>
+        function submitForms() {
+            var form_project = $("#createNewProjectForm");
+            form_project.on("submit", function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: form_project.attr("action"),
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function (data) {
+                        var selected = [];
+                        $("#addNewContributorsForm input:checked").each(function () {
+                            selected.push({"user_id": $(this)[0].value, "user_role": $(this)[0].parentNode.parentNode.children[1].value});
+                        });
+
+                        $.ajax({
+                            url: "/projects/" + data["project_id"] + "/new_contributors",
+                            type: "POST",
+                            data: {'csrfmiddlewaretoken': $("#addNewContributorsForm input:hidden")[0].value, 'selected': JSON.stringify(selected)},
+                            success: function (data){
+                                location.reload();
+                            }
+                        });
+                    }
+                });
+            })
+            form_project.submit();
+        }
+
+        function checkCheckbox(el) {
+            el.children[0].checked = !el.children[0].checked;
+        }
+    </script>
 {% endblock %}
