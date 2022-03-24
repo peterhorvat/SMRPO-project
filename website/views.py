@@ -117,7 +117,7 @@ def loginOTP(request):
 def project_page(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     stories = Zgodba.objects.filter(projekt=project)
-    clan = Clan.objects.get(uporabnik=request.user)
+    clan = Clan.objects.get(uporabnik=request.user, projekt=project)
 
     context = {
         'projekt': project,
