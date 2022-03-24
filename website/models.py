@@ -58,6 +58,9 @@ class Clan(models.Model):
         verbose_name = "Član"
         unique_together = ["projekt", "vloga"]
 
+    def edit_stories(self):
+        return self.vloga == self.PRODUCT_OWNER or self.vloga == self.SCRUM_MASTER
+
 
 # Nov sprint se ne more začet dokler se ne konča prejšnji
 class Sprint(models.Model):

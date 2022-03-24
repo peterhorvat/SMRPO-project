@@ -9,7 +9,7 @@
         <div style="padding: 10px">
         <div class="d-flex justify-content-between mb-3">
                <h1>Projekt: {{ projekt.ime }}</h1>
-           {% if clan.vloga == 0 or clan.vloga == 1 %}
+           {% if clan.edit_stories %}
                 <button class="btn pull-right btn-success text-right float-right " data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo" data-bs-Action="stories/new/" >
                    <i class="fa fa-plus"></i> Dodaj zgodbo
                 </button>
@@ -21,6 +21,7 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                         <h3 class="card-title" style="margin-right: 5px">{{ zgodba.ime }}</h3>
+                        {% if clan.edit_stories %}
                         <div class="d-flex">
                             <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Ime="{{ zgodba.ime }}" data-bs-Vsebina="{{ zgodba.vsebina }}"
                                     data-bs-SprejemniTesti="{{ zgodba.sprejemni_testi }}" data-bs-Vrednost="{{ zgodba.poslovna_vrednost }}"
@@ -29,6 +30,7 @@
                             </button>
                             <button class="btn" onclick="confirmDelete({{ zgodba.id }})"><span><i class="fas fa-times" style="color: red"></i></span></button>
                         </div>
+                        {% endif %}
                     </div>
                     <div class="card-body">
                         <h5>Vsebina:</h5>
