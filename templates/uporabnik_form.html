@@ -4,14 +4,17 @@
 {% block content %}
     <div id="main" class="container">
         <div class="cols-sm-2 col-md-6 col-lg-6">
-            <h3>User: {{ user.username }}</h3>
+            <h3>Uporabnik: {{ user.username }}</h3>
             <form action="" method="post">
                 {% csrf_token %}
                 <fieldset class="form-group">
                     {{ form|crispy }}
                     <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
                 </fieldset>
-                <input type="submit" class="btn btn-success" value="Posodobi">
+                <div>
+                    <input type="submit" class="btn btn-success" value="Posodobi">
+                    <a href="/password_change" class="btn btn-success">Spremeni geslo</a>
+                </div>
             </form>
         </div>
     </div>

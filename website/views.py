@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404, get_list_or_40
 # from psycopg2._json import Json
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, NewUporabnikForm
+from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, UporabnikChangeForm
 from .models import Uporabnik, Projekt, Zgodba, Clan
 
 
@@ -176,30 +176,21 @@ def update_user(request):
     # dictionary for initial data with
     # field names as keys
     context = {}
-
     current_user = request.user
 
-    # fetch the object related to passed id
-    obj = get_object_or_404(Uporabnik, id=current_user.id)
+    if request.method == 'POST':
+        # pass the object as instance in form
+        form = UporabnikChangeForm(data=request.POST, instance=current_user)
 
-    # pass the object as instance in form
-    form = NewUporabnikForm(request.POST or None, instance=obj, initial={'password': ''})
+        # save the data from the form and
+        # redirect to detail_view
+        if form.is_valid():
+            form.save()
+            return redirect('/')
 
-    # save the data from the form and
-    # redirect to detail_view
-    if form.is_valid():
-        Uporabnik.objects.filter(pk=current_user.id).update(
-            username=request.POST["username"],
-            first_name=request.POST["first_name"],
-            last_name=request.POST["last_name"],
-            email=request.POST["email"],
-            otp_auth=True)
-        if form.data['password']:
-            user = Uporabnik.objects.get(username=request.POST["username"])
-            user.set_password(request.POST["password"])
-            user.save()
-
-    # add form dictionary to context
-    context["form"] = form
+        # add form dictionary to context
+        context["form"] = form
+    else:
+        context['form'] = UporabnikChangeForm(instance=current_user)
 
     return render(request, "uporabnik_form.html", context)
