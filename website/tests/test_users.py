@@ -14,6 +14,15 @@ class UporabnikTest(TestCase):
         jnovak.set_password("preprostogeslo")
         jnovak.save()
 
+        Uporabnik.objects.create(
+            username="anovak", first_name="Anton", last_name="Novak",
+            email="anton.novak@test.com",
+            otp_auth=False)
+        anovak = Uporabnik.objects.get(username="anovak")
+        anovak.set_password('   cudn  ogeslo    ')
+        anovak.save()
+
+
     def test_correct_data(self):
         c = Client()
         success = c.login(username='jnovak', password='preprostogeslo')
@@ -29,3 +38,7 @@ class UporabnikTest(TestCase):
         success = c.login(username='napacni-uporabnik', password='preprostogeslo')
         self.assertFalse(success, "Prijava z napačnim uporabnikom je uspela!")
 
+    def test_passowrd(self):
+        c = Client()
+        success = c.login(username='anovak', password='   cudn  ogeslo    ')
+        self.assertTrue(success, "Prijava z geslom s presledki ni uspela!")
