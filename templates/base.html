@@ -34,23 +34,21 @@
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
-            {% if request.user.is_superuser %}
-                {% if request.user.otp_auth %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin:index' %}">Administration</a>
-                    </li>
-                {% endif %}
-            {% endif %}
             {% if request.user.otp_auth %}
                 <li class="nav-item">
-                    <a class="nav-link" href="#">{{ request.user.username }}</a>
+                    <a class="nav-link" href="#">Uporabnik: {{ request.user.username }}</a>
+                </li>
+                <li class="nav-item navbar-text">
+                    Zadnja prijava: {{ request.user.last_login|date:'d/m/Y H:i:s e' }}
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">SITE2</a>
+                    <a class="nav-link" href="/">Začetna stran</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">SITE3</a>
-                </li>
+                {% if request.user.is_superuser and request.user.otp_auth %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}">Administracija</a>
+                    </li>
+                {% endif %}
             {% endif %}
             {% if request.user.is_authenticated %}
                 {% if request.user.otp_auth %}
@@ -61,23 +59,16 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink" data-bs-popper="none">
                             <li>
                                 <a class="dropdown-item" href="/user_settings">
-                                    <i class="bi bi-person-lines-fill"></i>
+                                    <i class="bi bi-wrench"></i>
                                     <span class="ms-2">{{ request.user.username }}</span>
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="bi bi-wrench"></i>
-                                    <span class="ms-2">Nastavitve</span>
+                                <a class="dropdown-item" href="#" id="otp">
+                                    <i class="bi bi-shield-lock"></i>
+                                    <span class="ms-2">OTP</span>
                                 </a>
                             </li>
-
-                                <li>
-                                    <a class="dropdown-item" href="#" id="otp">
-                                        <i class="bi bi-shield-lock"></i>
-                                        <span class="ms-2">OTP</span>
-                                    </a>
-                                </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'logout' %}">
                                     <i class="bi bi-power"></i>

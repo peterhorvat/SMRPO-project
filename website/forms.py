@@ -1,6 +1,8 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
-from .models import Uporabnik, Projekt, Zgodba, Clan
+
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
+from .models import Uporabnik, Projekt, Zgodba
+
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 
@@ -16,6 +18,27 @@ class UserLoginForm(AuthenticationForm):
         self.fields['password'].label = "Geslo"
 
 
+class UporabnikCreationForm(UserCreationForm):
+    class Meta:
+        model = Uporabnik
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+
+class UporabnikChangeForm(UserChangeForm):
+    class Meta:
+        model = Uporabnik
+        fields = ['username', 'first_name', 'last_name', 'email']
+        labels = {
+            'username' : 'Uporabniško ime',
+            'first_name': 'Ime',
+            'last_name': 'Priimek',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(UporabnikChangeForm, self).__init__(*args, **kwargs)
+        self.fields['password'].label = "Geslo"
+        self.fields['password'].help_text = ""
+
 class CreateNewProjectForm(ModelForm):
     class Meta:
         model = Projekt
@@ -27,7 +50,8 @@ class CreateNewProjectForm(ModelForm):
 
 
 class OTPForm(forms.Form):
-    otp_code = forms.CharField(max_length=10, label="OTP koda", help_text="Vnesite OTP kodo iz avtentikatorja", widget=forms.TextInput(attrs={'autocomplete': 'off', 'autofocus': ''}))
+    otp_code = forms.CharField(max_length=10, label="OTP koda", help_text="Vnesite OTP kodo iz avtentikatorja",
+                               widget=forms.TextInput(attrs={'autocomplete': 'off', 'autofocus': ''}))
 
 
 class NewZgodbaForm(ModelForm):

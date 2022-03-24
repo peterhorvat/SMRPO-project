@@ -1,13 +1,17 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from website.models import Uporabnik, Projekt, Clan, Sprint, Zgodba, Naloga, Komentar, Objava, DailyScrum, \
     Dokumentacija, BelezenjeCasa, Besedila
+from website.forms import Uporabnik, UporabnikChangeForm, UporabnikCreationForm
 
 
-class UporabnikAdmin(admin.ModelAdmin):
+class UporabnikAdmin(UserAdmin):
+    add_form = UporabnikCreationForm
+    form = UporabnikChangeForm
+    model = Uporabnik
+    list_display = ['username', 'first_name', 'last_name', 'email', 'otp_auth']
     search_fields = ('username',)
-    list_display = ('username', 'first_name', 'last_name', 'email')
-    # list_filter = []
 
 
 class ProjektAdmin(admin.ModelAdmin):
