@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block content %}
+    <div class="d-flex" style="justify-content: center; flex-direction: column; width: 40%; padding: 10px;">
+        <form method="post" action="" id="editForm">
+            {% csrf_token %}
+            <fieldset>
+                {{ form|crispy }}
+            </fieldset>
+        </form>
+        <button type="submit" form="editForm" class="btn btn-success">Posodobi podatke</button>
+    </div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+            $("input[name='ime']")[0].value = "{{ projekt_ime }}";
+            $("textarea[name='opis']")[0].value = "{{ projekt_opis }}";
+        });
+        var edit_form = $("#editForm");
+        edit_form.on("submit", function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: edit_form.attr("action"),
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (data) {
+                    if(data["status"] === 400){
+                        alert("To ime že obstaja");
+                        $("input[name='ime']")[0].value = "{{ projekt_ime }}";
+                    }
+                }
+            });
+        })
+
+    </script>
+{% endblock %}

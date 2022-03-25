@@ -25,7 +25,8 @@ class Uporabnik(AbstractUser):
 
 class Projekt(models.Model):
 
-    ime = models.CharField(max_length=255, verbose_name="Ime projekta" )
+    ime = models.CharField(max_length=255, verbose_name="Ime projekta")
+    opis = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

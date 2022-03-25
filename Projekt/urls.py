@@ -26,6 +26,7 @@ router = routers.DefaultRouter(trailing_slash=False)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('404/', v.missing, name="not_dount"),
     path('', v.landing_page, name='landing_page'),
     path('login/', v.login_page, name='login_page'),
     path("create_new_project/", v.create_new_project, name='create_new_project'),
@@ -35,6 +36,7 @@ urlpatterns = [
     path('disableOTP/', v.disableOTP, name='disableOTP'),
     path('loginOTP/', v.loginOTP, name='loginOTP'),
     path('projects/<int:project_id>/', v.project_page, name='project_page'),
+    path('projects/<int:project_id>/edit/', v.edit_project, name='edit_project_page'),
     path('projects/<int:project_id>/new_contributors', v.create_new_clan, name='new_contributors'),
     path('projects/<int:project_id>/stories/new/', v.new_story, name='create_story'),
     path('projects/<int:project_id>/stories/delete/<int:story_id>/', v.delete_story, name='delete_story'),

@@ -7,8 +7,14 @@
             {% for projekt in projekti %}
                 <div class="d-flex text-center align-items-baseline" style="justify-content: space-between; padding: 10px">
                     <h5 style="margin-right: 5px"><a href="/projects/{{ projekt.id }}">{{ projekt.ime }}</a></h5>
-                    <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
-                    </button>
+                    {% if request.user.is_superuser %}
+                        <div class="d-flex" style="justify-content: space-between; width: 30%">
+                            <button class="btn btn-primary" onclick="window.location.replace('projects/{{ projekt.id }}/edit/')" style="height: 40%; width: auto"><span><i class="fas fa-edit"></i></span>
+                            </button>
+                            <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
+                            </button>
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

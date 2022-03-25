@@ -29,7 +29,7 @@ class UporabnikChangeForm(UserChangeForm):
         model = Uporabnik
         fields = ['username', 'first_name', 'last_name', 'email']
         labels = {
-            'username' : 'Uporabniško ime',
+            'username': 'Uporabniško ime',
             'first_name': 'Ime',
             'last_name': 'Priimek',
         }
@@ -39,10 +39,11 @@ class UporabnikChangeForm(UserChangeForm):
         self.fields['password'].label = "Geslo"
         self.fields['password'].help_text = ""
 
+
 class CreateNewProjectForm(ModelForm):
     class Meta:
         model = Projekt
-        fields = ['ime']
+        fields = ['ime', "opis"]
 
     def __init__(self, *args, **kwargs):
         super(CreateNewProjectForm, self).__init__(*args, **kwargs)
