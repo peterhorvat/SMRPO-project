@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*!rmhtlt_$0$t7ue((69zyk)obid^f7hbqvq7olvv#99+6)jbv'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'smrpo-s5.herokuapp.com']
 
@@ -84,23 +84,23 @@ WSGI_APPLICATION = 'Projekt.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'dderjcguhen9ev',
-        'USER': 'jrtezazkozczdm',
-        'PASSWORD': '8a0fb5d9d6fe8ef6f2b07010465aedc75a82a2ab44ae54fe6714ee57ee5002cf',
-        'HOST': 'ec2-54-76-249-45.eu-west-1.compute.amazonaws.com',
-        'PORT': 5432,
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'dderjcguhen9ev',
+#         'USER': 'jrtezazkozczdm',
+#         'PASSWORD': '8a0fb5d9d6fe8ef6f2b07010465aedc75a82a2ab44ae54fe6714ee57ee5002cf',
+#         'HOST': 'ec2-54-76-249-45.eu-west-1.compute.amazonaws.com',
+#         'PORT': 5432,
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
