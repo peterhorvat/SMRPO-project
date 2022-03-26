@@ -1,18 +1,22 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import user_logged_in
+from django.contrib.auth.models import update_last_login
+from django.utils import timezone
 from django.db import models
 from autoslug import AutoSlugField
 from ckeditor.fields import RichTextField
 
 
 class Uporabnik(AbstractUser):
-    username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Username")
-    first_name = models.CharField(max_length=30, verbose_name="First name", editable=True)
-    last_name = models.CharField(max_length=150, verbose_name="Last name", editable=True)
-    email = models.EmailField(unique=True, verbose_name="e-Mail")
+    username = models.CharField(max_length=30, unique=True, editable=True, verbose_name="Uporabniško ime")
+    first_name = models.CharField(max_length=30, verbose_name="Ime", editable=True)
+    last_name = models.CharField(max_length=150, verbose_name="Priimek", editable=True)
+    email = models.EmailField(unique=True, verbose_name="e-mail")
     slug = AutoSlugField(max_length=255, populate_from='username', default="", null=True, blank=True,
                          verbose_name="Username slug")
     otp_auth = models.BooleanField(default=True, verbose_name="Zahtevana OTP avtentikacija")
+    previous_login = models.DateTimeField(null=True, blank=True, verbose_name="Prejšnja prijava")
     USERNAME_FIELD = "username"
 
     def __str__(self):
@@ -21,6 +25,16 @@ class Uporabnik(AbstractUser):
     class Meta:
         verbose_name_plural = "Uporabniki"
         verbose_name = "Uporabnik"
+
+
+def update_last_and_previous_login(sender, user, **kwargs):
+    user.previous_login = user.last_login
+    user.last_login = timezone.now()
+    user.save(update_fields=["previous_login", "last_login"])
+
+
+user_logged_in.disconnect(update_last_login, dispatch_uid="update_last_login")
+user_logged_in.connect(update_last_and_previous_login, dispatch_uid="update_last_and_previous_login")
 
 
 class Projekt(models.Model):

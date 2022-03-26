@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from website.models import Uporabnik, Projekt, Clan, Sprint, Zgodba, Naloga, Komentar, Objava, DailyScrum, \
     Dokumentacija, BelezenjeCasa, Besedila
-from website.forms import Uporabnik, UporabnikChangeForm, UporabnikCreationForm
+from website.forms import UporabnikChangeForm, UporabnikCreationForm
 
 
 class UporabnikAdmin(UserAdmin):

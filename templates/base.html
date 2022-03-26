@@ -39,7 +39,12 @@
                     <a class="nav-link" href="#">Uporabnik: {{ request.user.username }}</a>
                 </li>
                 <li class="nav-item navbar-text">
-                    Zadnja prijava: {{ request.user.last_login|date:'d/m/Y H:i:s e' }}
+                    Zadnja prijava:
+                    {% if request.user.previous_login is None %}
+                        Prva prijava
+                    {% else %}
+                        {{ request.user.previous_login|date:'d/m/Y H:i:s e' }}
+                    {% endif %}
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="/">Začetna stran</a>
