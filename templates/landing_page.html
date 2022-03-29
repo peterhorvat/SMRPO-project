@@ -9,17 +9,19 @@
                     <h5 style="margin-right: 5px"><a href="/projects/{{ projekt.id }}">{{ projekt.ime }}</a></h5>
                     {% if request.user.is_superuser %}
                         <div class="d-flex" style="justify-content: space-between; width: 30%">
-                            <button class="btn btn-primary" onclick="window.location.replace('projects/{{ projekt.id }}/edit/')" style="height: 40%; width: auto"><span><i class="fas fa-edit"></i></span>
+                            <button class="btn btn-primary" onclick="window.location.replace('projects/{{ projekt.id }}/edit/')" style="height: 40%; width: auto"><span><i
+                                    class="fas fa-edit"></i></span>
                             </button>
-                            <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i class="fas fa-times"></i></span>
+                            <button class="btn btn-danger" onclick="window.location.replace('/delete_project/{{ projekt.id }}')" style="height: 40%; width: auto"><span><i
+                                    class="fas fa-times"></i></span>
                             </button>
                         </div>
                     {% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="modal fade" tabindex="-1" id="addNewProject" aria-labelledby="addNewProject" aria-hidden="true">
-            <div class="modal-dialog">
+        <div class="modal fade " tabindex="-1" id="addNewProject" aria-labelledby="addNewProject" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Ustvari novi projekt</h5>
@@ -37,16 +39,19 @@
                             {% csrf_token %}
                             <div style="border: 1px lightgrey solid; padding: 10px">
                                 {% for uporabnik in uporabniki %}
-                                    <div class="d-flex" style="justify-content: space-between; padding: 10px">
-                                        <div class="form-group d-flex" style="align-items: center ; width: 30%; justify-content: space-between;" onclick="checkCheckbox(this)">
-                                            <input type="checkbox" value="{{ uporabnik.id }}">
+                                    <div class="d-flex" style="justify-content: space-evenly; padding: 10px">
+                                        <div class="form-group d-flex clani" style="width: 20%; justify-content: flex-start;align-items: center" onclick="checkCheckbox(event, this)">
+                                            <input type="checkbox" value="{{ uporabnik.id }}" style="margin-right: 10px">
                                             <label>{{ uporabnik.username }}</label>
                                         </div>
-                                        <select class="form-select" style="width: 50%">
-                                            <option value="2"> Team member</option>
-                                            <option value="1"> Scrum master</option>
-                                            <option value="0"> Product owner</option>
-                                        </select>
+                                        <div class="form-group d-flex inputs" style="justify-content:space-evenly ;width: 80%">
+                                            {% for usr_type in user_types %}
+                                                <div class="d-flex " style="align-items: center;">
+                                                    <input type="checkbox" style="margin-right: 10px" onclick="checkRoleCheckbox(event,this,{{ forloop.counter0 }})" value="{{ forloop.counter0 }}">
+                                                    <label>{{ usr_type }}</label>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
 
                                 {% endfor %}
@@ -55,7 +60,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" onclick="submitForms()" class="btn btn-success">Ustvari novi projekt</button>
+                        <button type="button" onclick="submitForms(event)" class="btn btn-success">Ustvari novi projekt</button>
                     </div>
                 </div>
             </div>
@@ -68,36 +73,145 @@
 
 {% block scripts %}
     <script>
-        function submitForms() {
-            var form_project = $("#createNewProjectForm");
-            form_project.on("submit", function (e) {
-                e.preventDefault();
-                $.ajax({
-                    url: form_project.attr("action"),
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function (data) {
-                        var selected = [];
-                        $("#addNewContributorsForm input:checked").each(function () {
-                            selected.push({"user_id": $(this)[0].value, "user_role": $(this)[0].parentNode.parentNode.children[1].value});
-                        });
-
-                        $.ajax({
-                            url: "/projects/" + data["project_id"] + "/new_contributors",
-                            type: "POST",
-                            data: {'csrfmiddlewaretoken': $("#addNewContributorsForm input:hidden")[0].value, 'selected': JSON.stringify(selected)},
-                            success: function (data){
-                                location.reload();
+        var form_project = $("#createNewProjectForm");
+        form_project.on("submit", function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: form_project.attr("action"),
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (data) {
+                    var selected = [];
+                    var checked = $(".clani input:checked");
+                    checked.each(x => {
+                        let roles = [];
+                        for (let i of checked[x].parentNode.parentNode.children[1].children) {
+                            if (i.children[0].checked) {
+                                roles.push(i.children[0].value);
                             }
-                        });
+                        }
+                        selected.push({"id": checked[x].value, "roles": roles});
+                    });
+                    $.ajax({
+                        url: "/projects/" + data["project_id"] + "/new_contributors",
+                        type: "POST",
+                        data: {'csrfmiddlewaretoken': $("#addNewContributorsForm input:hidden")[0].value, 'selected': JSON.stringify(selected)},
+                        success: function (data) {
+                            location.reload();
+                        }
+                    });
+                }
+            });
+        })
+
+        function checkIfAbleToSubmit() {
+            var inputs = $(".inputs ");
+            var clani = $(".clani ");
+            var owner = false;
+            var master = false;
+            var member = false;
+            for (let input of inputs) {
+                for (let role of input.children) {
+
+                    if (role.children[0].checked && role.children[0].value === "0" && owner === false) {
+                        owner = true;
+                    } else if(role.children[0].checked && role.children[0].value === "0" && owner === true) {
+                        return {"error": true, "error_text": "Samo en projekt owner je lahko na projektu."}
                     }
-                });
-            })
-            form_project.submit();
+                    if ( role.children[0].checked && role.children[0].value === "1" && master === false) {
+                        console.log("here");
+                        master = true;
+                    } else if(role.children[0].checked && role.children[0].value === "1" && master === true) {
+                        return {"error": true, "error_text": "Samo en scrum master je lahko na projektu."}
+                    }
+                    if (role.children[0].checked && role.children[0].value === "2") {
+                        member = true;
+                    }
+                }
+
+            }
+            if (!owner || !master || !member) {
+                return {"error": true, "error_text": "Projekt mora vsebovati 1 project ownerja, 1 scrum masterja in usaj enega team memberja."}
+            }
+            return {"error": false}
         }
 
-        function checkCheckbox(el) {
+        function submitForms() {
+            var valid = checkIfAbleToSubmit();
+            if (!valid["error"]) {
+                form_project.submit()
+            } else {
+                alert(valid["error_text"])
+            }
+        }
+
+        function checkCheckbox(event, el) {
+            if (event.target !== event.currentTarget) return;
             el.children[0].checked = !el.children[0].checked;
+        }
+
+        function checkRoleCheckbox(event, el, value) {
+            var inputs = $(".inputs ");
+            var filtered = [];
+            for (let i of inputs) {
+                if (i !== el.parentNode.parentNode) {
+                    filtered.push(i);
+                }
+            }
+            if (value === 0) {
+                if (el.checked) {
+                    el.parentNode.parentNode.parentNode.children[0].children[0].checked = true;
+                    for (let i of el.parentNode.parentNode.children) {
+                        if (i.children[0] !== el) {
+                            i.children[0].checked = false;
+                            i.children[0].disabled = true;
+                        }
+                    }
+                    for (let i of filtered) {
+                        for (let j = 0; j < i.children.length; j++) {
+                            if (j === 0) {
+                                i.children[j].children[0].checked = false;
+                            } else {
+                                i.children[j].children[0].disabled = false;
+                            }
+                        }
+                    }
+                } else {
+                    for (let i of el.parentNode.parentNode.children) {
+                        if (i.children[0] !== el) {
+                            i.children[0].disabled = false;
+                        }
+                    }
+                    for (let i of filtered) {
+                        for (let j = 0; j < i.children.length; j++) {
+                            if (j !== 0) {
+                                i.children[j].children[0].disabled = false;
+                            }
+                        }
+                    }
+                }
+            } else if (value === 1) {
+                if (el.checked) {
+                    el.parentNode.parentNode.parentNode.children[0].children[0].checked = true;
+                    el.parentNode.parentNode.children[0].children[0].checked = false;
+                    el.parentNode.parentNode.children[0].children[0].disabled = true;
+                    for (let i of filtered) {
+                        i.children[1].children[0].checked = false;
+                        i.children[0].children[0].disabled = false;
+                    }
+                } else {
+                    el.parentNode.parentNode.children[0].children[0].checked = false;
+                    el.parentNode.parentNode.children[0].children[0].disabled = false;
+                }
+            } else {
+                if (el.checked) {
+                    el.parentNode.parentNode.parentNode.children[0].children[0].checked = true;
+                    el.parentNode.parentNode.children[0].children[0].checked = false;
+                } else {
+                    el.parentNode.parentNode.children[0].children[0].checked = false;
+                    el.parentNode.parentNode.children[0].children[0].disabled = false;
+                }
+            }
         }
     </script>
 {% endblock %}

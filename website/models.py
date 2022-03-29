@@ -38,7 +38,6 @@ user_logged_in.connect(update_last_and_previous_login, dispatch_uid="update_last
 
 
 class Projekt(models.Model):
-
     ime = models.CharField(max_length=255, verbose_name="Ime projekta")
     opis = models.TextField(default="")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -53,16 +52,7 @@ class Projekt(models.Model):
 
 
 class Clan(models.Model):
-    PRODUCT_OWNER = 0
-    SCRUM_MASTER = 1
-    TEAM_MEMBER = 2
-    VLOGA_TYPES = (
-        (PRODUCT_OWNER, 'Product owner'),
-        (SCRUM_MASTER, 'Scrum master'),
-        (TEAM_MEMBER, 'Team member'),
-    )
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
-    vloga = models.IntegerField(choices=VLOGA_TYPES, verbose_name="Vloga pri projektu")
     uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
 
     def __str__(self):
@@ -71,10 +61,32 @@ class Clan(models.Model):
     class Meta:
         verbose_name_plural = "Člani"
         verbose_name = "Član"
-        unique_together = ["projekt", "vloga"]
 
-    def edit_stories(self):
-        return self.vloga == self.PRODUCT_OWNER or self.vloga == self.SCRUM_MASTER
+
+class ScrumMaster(models.Model):
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
+
+    def __str__(self):
+        return f"[{self.uporabnik}]: {self.projekt}"
+
+    class Meta:
+        verbose_name_plural = "Scrum Master"
+        verbose_name = "Scrum Master"
+        unique_together = [["projekt", "uporabnik"]]
+
+
+class ProjectOwner(models.Model):
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
+
+    def __str__(self):
+        return f"[{self.uporabnik}]: {self.projekt}"
+
+    class Meta:
+        verbose_name_plural = "Project Owner"
+        verbose_name = "Project Owner"
+        unique_together = [["projekt", "uporabnik"]]
 
 
 # Nov sprint se ne more začet dokler se ne konča prejšnji

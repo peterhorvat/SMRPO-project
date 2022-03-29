@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, UporabnikChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Clan
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster
 
 
 @login_required
@@ -23,7 +23,7 @@ def landing_page(request):
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
         "projekt_form": CreateNewProjectForm()
-    }})
+    }, "user_types":["Product Owner", "Scrum Master", "Team Member "]})
 
 
 @login_required
@@ -47,8 +47,18 @@ def create_new_clan(request, project_id):
     project = Projekt.objects.get(pk=project_id)
     clani = json.loads(request.POST["selected"])
     for clan in clani:
-        new_clan = Clan(projekt=project, uporabnik=Uporabnik.objects.get(pk=int(clan['user_id'])), vloga=int(clan['user_role']))
-        new_clan.save()
+        print(clan)
+        for role in clan['roles']:
+            if role == "0":
+                new_owner = ProjectOwner(projekt=project, uporabnik=Uporabnik.objects.get(pk=int(clan["id"])))
+                new_owner.save()
+                continue
+            elif role == "1":
+                new_maser = ScrumMaster(projekt=project, uporabnik=Uporabnik.objects.get(pk=int(clan["id"])))
+                new_maser.save()
+            elif role == "2":
+                new_clan = Clan(projekt=project, uporabnik=Uporabnik.objects.get(pk=int(clan['id'])))
+                new_clan.save()
     return redirect("/")
 
 

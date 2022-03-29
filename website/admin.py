@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from website.models import Uporabnik, Projekt, Clan, Sprint, Zgodba, Naloga, Komentar, Objava, DailyScrum, \
+from website.models import Uporabnik, Projekt, Clan, ProjectOwner, ScrumMaster, Sprint, Zgodba, Naloga, Komentar, Objava, DailyScrum, \
     Dokumentacija, BelezenjeCasa, Besedila
 from website.forms import UporabnikChangeForm, UporabnikCreationForm
 
@@ -22,7 +22,19 @@ class ProjektAdmin(admin.ModelAdmin):
 
 class ClanAdmin(admin.ModelAdmin):
     search_fields = ('uporabnik', )
-    list_display = ['projekt', 'vloga', 'uporabnik']
+    list_display = ['projekt', 'uporabnik']
+    # list_filter = []
+
+
+class MasterAdmin(admin.ModelAdmin):
+    search_fields = ('uporabnik', )
+    list_display = ['projekt', 'uporabnik']
+    # list_filter = []
+
+
+class OwnerAdmin(admin.ModelAdmin):
+    search_fields = ('uporabnik', )
+    list_display = ['projekt', 'uporabnik']
     # list_filter = []
 
 
@@ -83,6 +95,8 @@ class BesedilaAdmin(admin.ModelAdmin):
 admin.site.register(Uporabnik, UporabnikAdmin)
 admin.site.register(Projekt, ProjektAdmin)
 admin.site.register(Clan, ClanAdmin)
+admin.site.register(ProjectOwner, OwnerAdmin)
+admin.site.register(ScrumMaster, MasterAdmin)
 admin.site.register(Sprint, SprintAdmin)
 admin.site.register(Zgodba, ZgodbaAdmin)
 admin.site.register(Naloga, NalogaAdmin)
