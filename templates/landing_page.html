@@ -112,14 +112,12 @@
             var member = false;
             for (let input of inputs) {
                 for (let role of input.children) {
-
                     if (role.children[0].checked && role.children[0].value === "0" && owner === false) {
                         owner = true;
                     } else if(role.children[0].checked && role.children[0].value === "0" && owner === true) {
                         return {"error": true, "error_text": "Samo en projekt owner je lahko na projektu."}
                     }
                     if ( role.children[0].checked && role.children[0].value === "1" && master === false) {
-                        console.log("here");
                         master = true;
                     } else if(role.children[0].checked && role.children[0].value === "1" && master === true) {
                         return {"error": true, "error_text": "Samo en scrum master je lahko na projektu."}
@@ -128,7 +126,18 @@
                         member = true;
                     }
                 }
-
+            }
+            for(let clan of clani){
+                let has_role = false;
+                for(let input of clan.parentNode.children[1].children){
+                    if(input.children[0].checked){
+                        has_role = true;
+                        break;
+                    }
+                }
+                if(!has_role){
+                    return {"error":true, "error_text": "Član ne more biti brez vloge."}
+                }
             }
             if (!owner || !master || !member) {
                 return {"error": true, "error_text": "Projekt mora vsebovati 1 project ownerja, 1 scrum masterja in usaj enega team memberja."}
