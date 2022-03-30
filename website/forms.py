@@ -55,17 +55,11 @@ class OTPForm(forms.Form):
                                widget=forms.TextInput(attrs={'autocomplete': 'off', 'autofocus': ''}))
 
 
-class NewZgodbaForm(ModelForm):
-    def clean_ime(self):
-        ime = self.cleaned_data['ime']
-        if len(Zgodba.objects.filter(ime=ime)) > 0:
-            raise ValidationError("Zgodba s tem imenom že obstaja")
-        return ime
-
+class ZgodbaForm(ModelForm):
     class Meta:
         model = Zgodba
         fields = ['ime', 'vsebina', 'sprejemni_testi', 'poslovna_vrednost', 'prioriteta']
-        help_texts = {'poslovna_vrednost': 'Vnesite število med 0 in 10.'}
+        help_texts = {'poslovna_vrednost': 'Vnesite število med 1 in 10.'}
         widgets = {
             'poslovna_vrednost': forms.NumberInput(attrs={'min': 1, 'max': 10})
         }
@@ -80,7 +74,7 @@ class NewUporabnikForm(ModelForm):
 
     def clean_username(self):
         ime = self.cleaned_data['username']
-        if len(Zgodba.objects.filter(ime=ime)) > 0:
+        if Zgodba.objects.filter(ime=ime).count() > 0:
             raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
         return ime
 

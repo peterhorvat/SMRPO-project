@@ -4,12 +4,12 @@ from datetime import datetime
 import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, NewZgodbaForm, UporabnikChangeForm
+from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster
 
 
@@ -18,7 +18,10 @@ def landing_page(request):
     if request.user.is_superuser:
         projekti = Projekt.objects.all()
     else:
-        projekti = [i.projekt for i in Clan.objects.filter(uporabnik=Uporabnik.objects.get(pk=request.user.id)).iterator()]
+        user = Uporabnik.objects.get(pk=request.user.id)
+        projekti = [i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
+            + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
+            + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]
 
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
@@ -142,13 +145,25 @@ def project_page(request, project_id):
     stories = Zgodba.objects.filter(projekt=project)
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
-    except:
-        return redirect("/404/")
+    except ObjectDoesNotExist:
+        clan = None
+    try:
+        scrum_master = ScrumMaster.objects.get(uporabnik=request.user, projekt=project)
+    except ObjectDoesNotExist:
+        scrum_master = None
+    try:
+        product_owner = ProjectOwner.objects.get(uporabnik=request.user, projekt=project)
+    except ObjectDoesNotExist:
+        product_owner = None
+    if clan is None and product_owner is None and scrum_master is None:
+        redirect('/404')
     context = {
         'projekt': project,
         'zgodbe': stories,
         'clan': clan,
-        'form': NewZgodbaForm()
+        'scrum_master': scrum_master,
+        'product_owner': product_owner,
+        'form': ZgodbaForm()
     }
 
     return render(request=request, template_name="project_page.html", context=context)
@@ -168,35 +183,6 @@ def edit_project(request, project_id):
         projekt.opis = request.POST["opis"]
         projekt.save()
         return redirect("/")
-
-
-@login_required
-def new_story(request, project_id):
-    project = get_object_or_404(Projekt, pk=project_id)
-
-    if request.method == 'POST':
-        story_form = NewZgodbaForm(request.POST)
-        if story_form.is_valid():
-            story_instance = story_form.save(commit=False)
-            story_instance.projekt = project
-            story_instance.save()
-            return redirect(f'/projects/{project_id}')
-        else:
-            raise ValidationError("Ime že obstaja")
-    else:
-        story_form = NewZgodbaForm()
-
-    context = {
-        'form': story_form,
-        'projekt': project,
-    }
-    return render(request, 'zgodba_form.html', context)
-
-
-@login_required
-def delete_story(request, project_id, story_id):
-    Zgodba.objects.filter(id=story_id).delete()
-    return redirect("/projects/" + str(project_id))
 
 
 @login_required

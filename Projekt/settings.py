@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'django_otp',
     'django_otp.plugins.otp_totp',
+    'api.apps.ApiConfig'
 ]
 
 MIDDLEWARE = [

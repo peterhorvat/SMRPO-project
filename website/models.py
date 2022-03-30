@@ -124,7 +124,7 @@ class Zgodba(models.Model):
     sprejemni_testi = RichTextField(verbose_name="Sprejemni testi zgodbe")
     poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                             verbose_name="Poslovna vrednost zgodbe")
-    prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Vloga pri projektu")
+    prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Prioriteta")
     opombe = RichTextField(verbose_name="Opombe zgodbe")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

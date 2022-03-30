@@ -9,8 +9,8 @@
         <div style="padding: 10px">
         <div class="d-flex justify-content-between mb-3">
                <h1>Projekt: {{ projekt.ime }}</h1>
-           {% if clan.edit_stories %}
-                <button class="btn pull-right btn-success text-right float-right " data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo" data-bs-Action="stories/new/" >
+           {% if product_owner is not None or scrum_master is not None %}
+                <button class="btn pull-right btn-success text-right float-right " data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo" data-bs-Action="/api/projects/{{ projekt.id }}/stories/" >
                    <i class="fa fa-plus"></i> Dodaj zgodbo
                 </button>
             {% endif %}
@@ -21,22 +21,22 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                         <h3 class="card-title" style="margin-right: 5px">{{ zgodba.ime }}</h3>
-                        {% if clan.edit_stories %}
+                        {% if product_owner is not None or scrum_master is not None %}
                         <div class="d-flex">
                             <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Ime="{{ zgodba.ime }}" data-bs-Vsebina="{{ zgodba.vsebina }}"
                                     data-bs-SprejemniTesti="{{ zgodba.sprejemni_testi }}" data-bs-Vrednost="{{ zgodba.poslovna_vrednost }}"
-                                    data-bs-Prioritety="{{ zgodba.get_prioriteta_display }}" data-bs-Gumb="Posodobi zgodbo" data-bs-Action="stories/{{ zgodba.id }}/">
+                                    data-bs-Prioritety="{{ zgodba.get_prioriteta_display }}" data-bs-Gumb="Posodobi zgodbo" data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba.id }}/">
                                 <span><i class="fas fa-edit" style="color: gray"></i></span>
                             </button>
-                            <button class="btn" onclick="confirmDelete({{ zgodba.id }})"><span><i class="fas fa-times" style="color: red"></i></span></button>
+                            <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba.id }})"><span><i class="fas fa-times" style="color: red"></i></span></button>
                         </div>
                         {% endif %}
                     </div>
                     <div class="card-body">
                         <h5>Vsebina:</h5>
-                        <p class="card-text">{{ zgodba.vsebina }}</p>
+                        <p class="card-text">{{ zgodba.vsebina|linebreaks }}</p>
                         <h5>Sprejemni testi:</h5>
-                        <p class="card-text">{{ zgodba.sprejemni_testi }}</p>
+                        <p class="card-text">{{ zgodba.sprejemni_testi|linebreaks }}</p>
                         <p class="card-text">Poslovna vrednost: {{ zgodba.poslovna_vrednost }}</p>
                         <p class="card-text">Prioriteta: {{ zgodba.get_prioriteta_display }}</p>
                     </div>
@@ -61,7 +61,7 @@
                             </form>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
                             <button type="submit" form="createNewStoryForm" class="btn btn-success"></button>
                         </div>
                     </div>
@@ -73,6 +73,14 @@
 
 {% block scripts %}
     <script>
+        $(function() {
+            $.ajaxSetup({
+                headers: {
+                    "X-CSRFToken": $('[name=csrfmiddlewaretoken]').val()
+                }
+            })
+        });
+
         var modal = document.getElementById("addNewStory");
         modal.addEventListener("show.bs.modal", fillForm);
         var form = $("form")[0];
@@ -82,21 +90,44 @@
                 .done(function (){
                     location.reload();
                 })
-                .fail(function (jqXHR, textStatus) {
-                    alert("To ime že obstaja!");
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR);
+                    if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
+                        alert(jqXHR.responseJSON.Message);
+                    } else {
+                        alert(errorThrown);
+                    }
                 });
 
         });
-        function confirmDelete(id) {
+
+        function deleteStory(project_id, story_id) {
             if (confirm("Želite izbrisati zgodbo ?")) {
-                window.location.replace("stories/delete/" + id+"/");
+                $.ajax({
+                    url: "/api/projects/" + project_id + "/stories/" + story_id + "/",
+                    type: "DELETE",
+                    success: function (data) {
+                        location.reload();
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
+                            alert(jqXHR.responseJSON.Message);
+                        } else {
+                            alert(errorThrown);
+                        }
+                    }
+                })
             }
         }
 
         function fillForm(event) {
             var button = event.relatedTarget;
             var modal = document.getElementById("addNewStory");
-            var values = [button.getAttribute("data-bs-Ime"), button.getAttribute("data-bs-Vsebina"), button.getAttribute("data-bs-SprejemniTesti"), button.getAttribute("data-bs-Vrednost"), button.getAttribute("data-bs-Prioritety")]
+            var values = [button.getAttribute("data-bs-Ime"),
+                button.getAttribute("data-bs-Vsebina"),
+                button.getAttribute("data-bs-SprejemniTesti"),
+                button.getAttribute("data-bs-Vrednost"),
+                button.getAttribute("data-bs-Prioritety")]
             var modalBodyInput = modal.querySelectorAll('fieldset  input, fieldset  textarea');
             console.log(modalBodyInput);
             modalBodyInput[0].value = values[0];
