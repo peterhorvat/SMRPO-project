@@ -119,6 +119,7 @@ class Zgodba(models.Model):
         (WONT_HAVE, "Won't have this time")
     )
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, verbose_name="Sprint", null=True)
     ime = models.CharField(max_length=255, verbose_name="Ime zgodbe")
     vsebina = RichTextField(verbose_name="Vsebina zgodbe")
     sprejemni_testi = RichTextField(verbose_name="Sprejemni testi zgodbe")
