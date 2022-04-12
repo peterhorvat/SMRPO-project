@@ -4,7 +4,7 @@
     <div class="container mt-4">
         <h3>Seznam sprintov za izbrani projekt</h3>
         <div class="row mt-2 mb-2">
-            <div class="col-sm-12 col-md-4 col-lg-4 me-auto">
+{% comment %}            <div class="col-sm-12 col-md-4 col-lg-4 me-auto">
                 <label>Izberite projekt katerega sprinte želite videti</label>
                 <select class="form-select"
                         aria-label="Izbirnik projektov"
@@ -27,7 +27,7 @@
                         {% endif %}
                     {% endfor %}
                 </select>
-            </div>
+            </div>{% endcomment %}
             <div class="col-sm-12 col-md-auto col-lg-auto align-self-end d-flex flex-row-reverse">
                 <a class="btn btn-success" href="{% url 'create_new_sprint' %}" role="button">Dodaj nov sprint</a>
             </div>

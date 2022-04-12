@@ -13,7 +13,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 from .decorators import restricted
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, EditSprintFormAdmin
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga
 
 
 @login_required
@@ -287,3 +287,19 @@ def delete_sprint(request, id):
     Sprint.objects.filter(id=id).delete()
     return redirect("sprint_list")
 
+
+def project_summary(request, project_id):
+    instance = get_object_or_404(Projekt, id=project_id)
+    clani = Clan.objects.filter(projekt=instance)
+    zgodbe = Zgodba.objects.filter(projekt=instance)
+    sprinti = Sprint.objects.filter(projekt=instance)
+    naloge = Naloga.objects.filter(clan__projekt=instance)
+    return render(request, 'project_summary.html',
+                  {
+                      'projekt': instance,
+                      'clani': clani,
+                      'zgodbe': zgodbe,
+                      'sprinti': sprinti,
+                      'naloge': naloge
+
+                   })

@@ -43,9 +43,11 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/" >Domov</a>
                 </li>
+                {% comment %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.path == '/sprints/' %}active{% endif %}" href="{% url 'sprint_list' %}">Sprinti</a>
                 </li>
+                {% endcomment %}
                 {% if request.user.is_superuser and request.user.otp_auth %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin:index' %}">Administracija</a>

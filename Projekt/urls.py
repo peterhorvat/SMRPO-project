@@ -43,6 +43,8 @@ urlpatterns = [
     path('edit_sprint/<int:sprint_id>/', v.edit_sprint, name='edit_sprint'),
     path('sprints/', v.sprint_list, name='sprint_list'),
     path('sprints/<int:project_id>/', v.sprint_list, name='sprint_list_id'),
+
+    path('projects/<int:project_id>/summary', v.project_summary, name='project_summary'),
     path('user_settings/', v.update_user, name='update_user'),
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='change_password.html')),
     path('password_change/done', auth_views.PasswordChangeDoneView.as_view(template_name='change_password_done.html'), name='password_change_done'),

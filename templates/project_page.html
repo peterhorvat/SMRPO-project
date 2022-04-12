@@ -20,7 +20,9 @@
             {% for zgodba in zgodbe %}
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
-                        <h3 class="card-title" style="margin-right: 5px">{{ zgodba.ime }}</h3>
+                        <h3 class="card-title text-center" style="margin-right: 5px">
+                            {{ zgodba.ime }}
+                        </h3>
                         {% if product_owner is not None or scrum_master is not None %}
                         <div class="d-flex">
                             <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory" data-bs-Ime="{{ zgodba.ime }}" data-bs-Vsebina="{{ zgodba.vsebina }}"

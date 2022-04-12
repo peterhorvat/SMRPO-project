@@ -80,7 +80,7 @@ class SprintForm(ModelForm):
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
-            'zacetni_cas': DateTimeInput(),
+            'zacetni_cas': DateTimeInput(format=""),
             'koncni_cas': DateTimeInput(),
         }
 

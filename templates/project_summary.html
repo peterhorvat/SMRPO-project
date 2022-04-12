@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block content %}
+
+    <div class="container mt-4">
+        <h3>{{ projekt.ime }}</h3>
+        <div class="row mt-4 mb-2">
+            <div class="row">
+              <div class="col-xl-6 col-md-12 mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between p-md-1">
+                      <div class="d-flex flex-row">
+                        <div class="align-self-center">
+                          <i class="fas fa-users text-info fa-3x me-4"></i>
+                        </div>
+                        <div>
+                          <h4>Člani</h4>
+                          <p class="mb-0">Število članov</p>
+                        </div>
+                      </div>
+                      <div class="align-self-center">
+                        <h2 class="h1 mb-0">{{ clani|length }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-6 col-md-12 mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between p-md-1">
+                      <div class="d-flex flex-row">
+                        <div class="align-self-center">
+                          <i class="fas fa-id-card text-success fa-3x me-4"></i>
+                        </div>
+                        <div>
+                          <h4><a href="{% url 'project_page' projekt.id %}">Zgodbe</a></h4>
+                          <p class="mb-0">Število zgodb</p>
+                        </div>
+                      </div>
+                      <div class="align-self-center">
+                        <h2 class="h1 mb-0">{{ zgodbe|length }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xl-6 col-md-12 mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between p-md-1">
+                      <div class="d-flex flex-row">
+                        <div class="align-self-center">
+                          <i class="fas fa-running text-warning fa-3x me-4"></i>
+                        </div>
+                        <div>
+                          <h4><a href="{% url 'sprint_list_id' projekt.id %}">Sprinti</a></h4>
+                          <p class="mb-0">Število ustvarjenih sprintov</p>
+                        </div>
+                      </div>
+                      <div class="align-self-center">
+                        <h2 class="h1 mb-0">{{ sprinti|length }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-6 col-md-12 mb-4">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between p-md-1">
+                      <div class="d-flex flex-row">
+                        <div class="align-self-center">
+                          <i class="fas fa-tasks text-danger fa-3x me-4"></i>
+                        </div>
+                        <div>
+                          <h4>Naloge</h4>
+                          <p class="mb-0">Število odprtih nalog</p>
+                        </div>
+                      </div>
+                      <div class="align-self-center">
+                        <h2 class="h1 mb-0">{{ naloge|length }}</h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <div class="row mt-4 mb-2">
+            <div class="col-sm-12 col-md-12 col-lg-12 me-auto">
+                <div class="card text-white bg-light mb-3">
+                    <div class="card-header text-dark">Ekipa</div>
+                    <div class="card-body">
+                        <table class="table table-light table-striped">
+                          <thead>
+                            <tr>
+                              <th scope="col">Uporabniško ime</th>
+                              <th scope="col">Ime</th>
+                              <th scope="col">Priimek</th>
+                              <th scope="col">E-Poštni naslov</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                          {% for clan in clani %}
+                            <tr>
+                              <td>{{ clan.uporabnik.username }}</td>
+                              <td>{{ clan.uporabnik.first_name }}</td>
+                              <td>{{ clan.uporabnik.last_name }}</td>
+                              <td><a href="mailto:{{ clan.uporabnik.email }}">{{ clan.uporabnik.email }}</a></td>
+                            </tr>
+                          {% endfor %}
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

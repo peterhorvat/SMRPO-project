@@ -6,7 +6,7 @@
         <div class="d-flex" style="flex-direction: column; padding: 10px; ">
             {% for projekt in projekti %}
                 <div class="d-flex text-center align-items-baseline" style="justify-content: space-between; padding: 10px">
-                    <h5 style="margin-right: 5px"><a href="/projects/{{ projekt.id }}">{{ projekt.ime }}</a></h5>
+                    <h5 style="margin-right: 5px"><a href="{% url 'project_summary' projekt.id %}">{{ projekt.ime }}</a></h5>
                     {% if request.user.is_superuser %}
                         <div class="d-flex" style="justify-content: space-between; width: 30%">
                             <button class="btn btn-primary" onclick="window.location.replace('projects/{{ projekt.id }}/edit/')" style="height: 40%; width: auto"><span><i
