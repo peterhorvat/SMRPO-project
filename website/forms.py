@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
@@ -9,8 +10,8 @@ from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 
 
-class DateInput(forms.DateInput):
-    input_type = 'date'
+class DateTimeInput(forms.DateTimeInput):
+    input_type = 'datetime-local'
 
 
 class UserLoginForm(AuthenticationForm):
@@ -73,20 +74,14 @@ class ZgodbaForm(ModelForm):
 #TODO: DATETIME NAMESTO DATE
 class SprintForm(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all())
-    zacetni_cas = forms.DateTimeField(
-        widget=forms.DateTimeInput(format='%d-%m-%Y, %H:%m'),
-        input_formats=['%d-%m-%Y, %H:%m']
-    )
-    koncni_cas = forms.DateTimeField(
-        widget=forms.DateTimeInput(format='%d-%m-%Y, %H:%m'),
-        input_formats=['%d-%m-%Y, %H:%m']
-    )
     class Meta:
         model = Sprint
         fields = ['ime', 'projekt', 'zacetni_cas', 'koncni_cas', 'hitrost']
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
-            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
+            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
+            'zacetni_cas': DateTimeInput(),
+            'koncni_cas': DateTimeInput(),
         }
 
     def clean(self):
@@ -98,7 +93,7 @@ class SprintForm(ModelForm):
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
-        if zacetni_cas.timestamp() < datetime.now().timestamp():
+        if zacetni_cas.timestamp() < datetime.now(pytz.timezone('Europe/Ljubljana')).timestamp():
             raise forms.ValidationError("Začetni čas ne sme biti v preteklosti!")
         return cleaned_data
 
@@ -116,20 +111,14 @@ class EditSprintForm(ModelForm):
 
 class EditSprintFormAdmin(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all(), disabled=True)
-    zacetni_cas = forms.DateTimeField(
-        widget=forms.DateTimeInput(format='%d-%m-%Y, %H:%m'),
-        input_formats=['%d-%m-%Y, %H:%m']
-    )
-    koncni_cas = forms.DateTimeField(
-        widget=forms.DateTimeInput(format='%d-%m-%Y, %H:%m'),
-        input_formats=['%d-%m-%Y, %H:%m']
-    )
     class Meta:
         model = Sprint
         fields = ['projekt', 'ime', 'hitrost', 'zacetni_cas', 'koncni_cas']
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
-            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
+            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
+            'zacetni_cas': DateTimeInput(),
+            'koncni_cas': DateTimeInput(),
         }
 
     def clean(self):
@@ -141,7 +130,7 @@ class EditSprintFormAdmin(ModelForm):
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
-        if zacetni_cas.timestamp() < datetime.now().timestamp():
+        if zacetni_cas.timestamp() < datetime.now(pytz.timezone('Europe/Ljubljana')).timestamp():
             raise forms.ValidationError("Začetni čas ne sme biti v preteklosti!")
         return cleaned_data
 
