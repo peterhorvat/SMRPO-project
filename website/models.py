@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import user_logged_in
@@ -102,6 +105,13 @@ class Sprint(models.Model):
     class Meta:
         verbose_name_plural = "Sprinti"
         verbose_name = "Sprint"
+
+    def pretekel(self):
+        return self.koncni_cas.timestamp() < datetime.now().timestamp()
+
+    def bo_pretekel(self):
+        razlika = self.koncni_cas-datetime.now(pytz.timezone('Europe/Ljubljana'))
+        return razlika.days < 2
 
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"

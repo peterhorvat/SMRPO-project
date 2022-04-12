@@ -5,12 +5,15 @@ import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster
+
+from .decorators import restricted
+from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
+    EditSprintForm, EditSprintFormAdmin
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint
 
 
 @login_required
@@ -225,3 +228,53 @@ def update_user(request):
 
 def missing(request):
     return render(request, "404.html")
+
+
+@login_required
+@restricted
+def create_new_sprint(request):
+    if request.method == 'POST':
+        form = SprintForm(request.POST)
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.save()
+    else:
+        form = SprintForm()
+    return render(request, 'sprint_form.html', {'form': form, 'create': True})
+
+
+@login_required
+def sprint_list(request, project_id=None):
+    cas_now = datetime.now().timestamp()
+    if project_id:
+        sprinti = Sprint.objects.filter(projekt_id=project_id)
+    else:
+        sprinti = Sprint.objects.all()
+    projekti = Projekt.objects.all()
+    try:
+        izbran_projekt = Projekt.objects.get(id=project_id)
+    except Projekt.DoesNotExist:
+        izbran_projekt = None
+    return render(request, 'sprint_list.html', {'sprinti': sprinti, 'projekti': projekti,
+                                                'izbran_projekt': izbran_projekt, 'cas': cas_now })
+
+@login_required
+@restricted
+def edit_sprint(request, sprint_id):
+    try:
+        instance = get_object_or_404(Sprint, id=sprint_id)
+        if request.method == 'POST':
+            form = EditSprintForm(request.POST or None, instance=instance)
+            if request.user.is_superuser:
+                form = EditSprintFormAdmin(request.POST or None, instance=instance)
+            if form.is_valid():
+                form.save()
+                return redirect('sprint_list')
+        else:
+            form = EditSprintForm(request.POST or None, instance=instance)
+            if request.user.is_superuser:
+                form = EditSprintFormAdmin(request.POST or None, instance=instance)
+        return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
+    except Sprint.DoesNotExist:
+        raise Http404
+

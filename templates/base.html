@@ -35,19 +35,16 @@
         <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
             <ul class="navbar-nav">
             {% if request.user.otp_auth %}
+                {% comment %}
                 <li class="nav-item">
                     <a class="nav-link" href="#">Uporabnik: {{ request.user.username }}</a>
                 </li>
-                <li class="nav-item navbar-text">
-                    Zadnja prijava:
-                    {% if request.user.previous_login is None %}
-                        Prva prijava
-                    {% else %}
-                        {{ request.user.previous_login|date:'d/m/Y H:i:s e' }}
-                    {% endif %}
+                {% endcomment %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/" >Domov</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Začetna stran</a>
+                    <a class="nav-link {% if request.path == '/sprints/' %}active{% endif %}" href="{% url 'sprint_list' %}">Sprinti</a>
                 </li>
                 {% if request.user.is_superuser and request.user.otp_auth %}
                     <li class="nav-item">
@@ -104,9 +101,7 @@
     {% block content %} {% endblock %}
     {% block scripts %} {% endblock %}
 </main>
-
-<footer class="sticky-bottom">
-    <script>
+<script>
         window.Swal = Swal;
         $('#otp').on('click', function (){
             Swal.fire({
@@ -219,6 +214,17 @@
             return false;
         });
     </script>
+<footer class="fixed-bottom">
+  <div class="container text-center">
+    <span class="text-muted">
+        Zadnja prijava:
+        {% if request.user.previous_login is None %}
+        Prva prijava
+        {% else %}
+            {{ request.user.previous_login|date:'d/m/Y H:i:s e' }}
+        {% endif %}
+    </span>
+  </div>
 </footer>
 </body>
 </html>
