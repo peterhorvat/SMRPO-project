@@ -238,11 +238,13 @@ def create_new_sprint(request):
         if form.is_valid():
             instance = form.save(commit=False)
             instance.save()
+            return redirect('sprint_list')
     else:
         form = SprintForm()
     return render(request, 'sprint_form.html', {'form': form, 'create': True})
 
 
+@login_required
 @login_required
 def sprint_list(request, project_id=None):
     cas_now = datetime.now().timestamp()
@@ -277,4 +279,11 @@ def edit_sprint(request, sprint_id):
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
     except Sprint.DoesNotExist:
         raise Http404
+
+
+@login_required
+@restricted
+def delete_sprint(request, id):
+    Sprint.objects.filter(id=id).delete()
+    return redirect("sprint_list")
 
