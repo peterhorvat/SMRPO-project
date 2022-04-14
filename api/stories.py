@@ -8,6 +8,7 @@ from django.forms.models import model_to_dict
 
 from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan
 from website.forms import ZgodbaForm
+from website.decorators import restrict_PO_SM
 
 
 class StoriesApi(View):
@@ -32,6 +33,7 @@ class StoriesApi(View):
                 return JsonResponse({'Message': 'Zgodba ne obstaja.'}, status=404)
 
     @method_decorator(login_required)
+    @method_decorator(restrict_PO_SM)
     def post(self, request, project_id, story_id=None):
         t = check_credentials(project_id, request.user.id)
         if not isinstance(t, tuple):
@@ -66,6 +68,7 @@ class StoriesApi(View):
             return JsonResponse({'Message': model_to_dict(story_instance)}, status=201)
 
     @method_decorator(login_required)
+    @method_decorator(restrict_PO_SM)
     def delete(self, request, project_id, story_id=None):
         if story_id is None:
             return JsonResponse({'Message': "Manjka ID zgodbe."}, status=404)
@@ -86,20 +89,9 @@ def check_credentials(project_id, user_id):
     try:
         project = Projekt.objects.get(pk=project_id)
         user = Uporabnik.objects.get(pk=user_id)
+        return project, user
     except ObjectDoesNotExist:
         return JsonResponse({'Message': 'Projekt ali uporabnik ne obstaja.'}, status=404)
-    if not is_sm_or_po(user, project):
-        return JsonResponse({'Message': f'Uporabnik {user} nima pooblastil.'}, status=403)
-    else:
-        return project, user
-
-
-def is_sm_or_po(user, project):
-    try:
-        return ScrumMaster.objects.filter(projekt=project, uporabnik=user).count() == 1 \
-            or ProjectOwner.objects.filter(projekt=project, uporabnik=user).count() == 1
-    except ObjectDoesNotExist:
-        return False
 
 
 def is_in_project(user, project):

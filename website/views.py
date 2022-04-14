@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
-from .decorators import restricted
+from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, EditSprintFormAdmin
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga
@@ -253,7 +253,7 @@ def missing(request):
 
 
 @login_required
-@restricted
+@restrict_SM
 def create_new_sprint(request):
     if request.method == 'POST':
         form = SprintForm(request.POST)
@@ -282,7 +282,7 @@ def sprint_list(request, project_id=None):
                                                 'izbran_projekt': izbran_projekt, 'cas': cas_now })
 
 @login_required
-@restricted
+@restrict_SM
 def edit_sprint(request, sprint_id):
     try:
         instance = get_object_or_404(Sprint, id=sprint_id)
@@ -303,7 +303,7 @@ def edit_sprint(request, sprint_id):
 
 
 @login_required
-@restricted
+@restrict_SM
 def delete_sprint(request, id):
     Sprint.objects.filter(id=id).delete()
     return redirect("sprint_list")
