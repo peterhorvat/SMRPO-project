@@ -6,7 +6,7 @@
             window.alert({{ error }})
         </script>
     {% endif %}
-    <div style="padding: 10px">
+    <div class="container mt-4">
         <div class="d-flex justify-content-between mb-3">
             <h1>Projekt: {{ projekt.ime }}</h1>
             {% if product_owner is not None or scrum_master is not None %}
@@ -58,34 +58,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th>Opis Naloge</th>
-                                    <th>Status</th>
-                                    <th>Zadolžen</th>
-                                    <th>Čas</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr>
-                                    <td>Bla Bla ...</td>
-                                    <td>Pending</td>
-                                    <td>admin</td>
-                                    <td>3h</td>
-                                </tr>
-                                <tr>
-                                    <td>Bla Bla ...</td>
-                                    <td>Pending</td>
-                                    <td>admin</td>
-                                    <td>3h</td>
 
-                                </tr>
-
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
                 <br/>

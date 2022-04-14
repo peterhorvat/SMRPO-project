@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import pytz
 
 import django_otp
 from django.contrib.auth import authenticate, login
@@ -143,7 +144,7 @@ def loginOTP(request):
 
 
 @login_required
-def project_page(request, project_id):
+def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     stories = Zgodba.objects.filter(projekt=project)
     try:
@@ -169,7 +170,7 @@ def project_page(request, project_id):
         'form': ZgodbaForm()
     }
 
-    return render(request=request, template_name="project_page.html", context=context)
+    return render(request=request, template_name="product_backlog.html", context=context)
 
 
 @login_required
@@ -226,6 +227,27 @@ def update_user(request):
     return render(request, "uporabnik_form.html", context)
 
 
+@login_required
+def sprint_backlog(request, project_id):
+    project = get_object_or_404(Projekt, pk=project_id)
+    context = {
+        'projekt': project
+    }
+    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
+    sprints = Sprint.objects.filter(projekt=project,
+                                    zacetni_cas__lte=curr_time,
+                                    koncni_cas__gte=curr_time)
+    if len(sprints) > 0:
+        stories = Zgodba.objects.filter(sprint=sprints[0])
+        context['zgodbe'] = [
+            {'zgodba': story, 'naloge': Naloga.objects.filter(zgodba=story).order_by('status')}
+            for story in stories
+        ]
+        context['sprint'] = sprints[0]
+
+    return render(request, "sprint_backlog.html", context)
+
+
 def missing(request):
     return render(request, "404.html")
 
@@ -244,7 +266,6 @@ def create_new_sprint(request):
     return render(request, 'sprint_form.html', {'form': form, 'create': True})
 
 
-@login_required
 @login_required
 def sprint_list(request, project_id=None):
     cas_now = datetime.now().timestamp()
@@ -291,15 +312,10 @@ def delete_sprint(request, id):
 def project_summary(request, project_id):
     instance = get_object_or_404(Projekt, id=project_id)
     clani = Clan.objects.filter(projekt=instance)
-    zgodbe = Zgodba.objects.filter(projekt=instance)
     sprinti = Sprint.objects.filter(projekt=instance)
-    naloge = Naloga.objects.filter(clan__projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
                       'clani': clani,
-                      'zgodbe': zgodbe,
                       'sprinti': sprinti,
-                      'naloge': naloge
-
                    })

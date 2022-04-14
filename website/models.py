@@ -154,13 +154,13 @@ class Naloga(models.Model):
     ACCEPTED = 1
     FINISHED = 2
     PRIORITETE = (
-        (NOT_ASSIGNED, 'Not assigned'),
-        (PENDING, 'Pending'),
-        (ACCEPTED, 'Accepted'),
-        (FINISHED, 'Finished'),
+        (NOT_ASSIGNED, 'Nedodeljena'),
+        (PENDING, 'Dodeljena'),
+        (ACCEPTED, 'Aktivna'),
+        (FINISHED, 'Zaključena'),
     )
 
-    ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime zgodbe")
+    ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime naloge")
     clan = models.ForeignKey(Clan, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Član")
     zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE, verbose_name="Zgodba")
     opis = RichTextField(verbose_name="Opis naloge")

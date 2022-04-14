@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
-from django.contrib.auth import authenticate
 
 from website.models import Uporabnik
+
 
 class UporabnikTest(TestCase):
     @classmethod
@@ -22,7 +22,6 @@ class UporabnikTest(TestCase):
         anovak.set_password('   cudn  ogeslo    ')
         anovak.save()
 
-
     def test_correct_data(self):
         c = Client()
         success = c.login(username='jnovak', password='preprostogeslo')
@@ -38,7 +37,7 @@ class UporabnikTest(TestCase):
         success = c.login(username='napacni-uporabnik', password='preprostogeslo')
         self.assertFalse(success, "Prijava z napačnim uporabnikom je uspela!")
 
-    def test_passowrd(self):
+    def test_password(self):
         c = Client()
         success = c.login(username='anovak', password='   cudn  ogeslo    ')
         self.assertTrue(success, "Prijava z geslom s presledki ni uspela!")
