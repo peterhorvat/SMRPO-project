@@ -161,8 +161,8 @@ class Naloga(models.Model):
     )
 
     ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime naloge")
-    clan = models.ForeignKey(Clan, null=True, blank=True, on_delete=models.CASCADE, verbose_name="Član")
-    zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE, verbose_name="Zgodba")
+    clan = models.ForeignKey(Clan, null=True, blank=True,unique=False, on_delete=models.CASCADE, verbose_name="Član")
+    zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE,  verbose_name="Zgodba")
     opis = RichTextField(verbose_name="Opis naloge")
     cas = models.IntegerField(verbose_name="Ocena časa")
     status = models.IntegerField(choices=PRIORITETE, verbose_name="Status naloge")
@@ -172,7 +172,7 @@ class Naloga(models.Model):
     class Meta:
         verbose_name_plural = "Naloge"
         verbose_name = "Naloga"
-        unique_together = ["clan", "zgodba"]
+        # unique_together = ["clan", "zgodba"]
 
     def __str__(self):
         return f"[{self.zgodba}:{self.clan}] {self.ime}"

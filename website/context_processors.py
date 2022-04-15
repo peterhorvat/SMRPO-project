@@ -15,7 +15,7 @@ def BaseOTP(request):
             activated = True
         else:
             if TOTPDevice.objects.filter(user=request.user, confirmed=False).exists():
-                device = TOTPDevice.objects.get(user=request.user)
+                device = TOTPDevice.objects.filter(user=request.user)
                 device.delete()
             device = TOTPDevice(user=request.user, name=f"SMRPO {request.user.username}", confirmed=False)
             device.save()

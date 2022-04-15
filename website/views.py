@@ -321,7 +321,6 @@ def project_summary(request, project_id):
                    })
 
 
-@login_required
 def create_new_task(request, story_id):
     if request.method == "POST":
         form = NalogaForm(request.POST)
@@ -337,5 +336,13 @@ def create_new_task(request, story_id):
         'form': form,
     })
 
+
+@login_required
+def tasks_list(request, story_id):
+    story = get_object_or_404(Zgodba, id=story_id)
+    tasks = Naloga.objects.filter(zgodba=story)
+    return render(request, 'tasks_list.html', {
+        'tasks': tasks,
+    })
 
 
