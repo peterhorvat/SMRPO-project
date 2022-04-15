@@ -4,7 +4,7 @@ import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Sprint
+from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga
 
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
@@ -154,3 +154,29 @@ class NewUporabnikForm(ModelForm):
         widgets = {
             'password': forms.PasswordInput(render_value=True),
         }
+
+
+class NewUporabnikForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        # first call parent's constructor
+        super(ModelForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['password'].required = False
+
+    def clean_username(self):
+        ime = self.cleaned_data['username']
+        if Zgodba.objects.filter(ime=ime).count() > 0:
+            raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
+        return ime
+
+    class Meta:
+        model = Uporabnik
+        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'otp_auth']
+        widgets = {
+            'password': forms.PasswordInput(render_value=True),
+        }
+
+class NalogaForm(ModelForm):
+    class Meta:
+        model = Naloga
+        fields = ['ime', 'opis', 'status', 'clan', 'cas']

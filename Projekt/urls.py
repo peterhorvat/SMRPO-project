@@ -48,6 +48,7 @@ urlpatterns = [
     path('user_settings/', v.update_user, name='update_user'),
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='change_password.html')),
     path('password_change/done', auth_views.PasswordChangeDoneView.as_view(template_name='change_password_done.html'), name='password_change_done'),
+    path("create_tasks/<int:story_id>/", v.create_new_task, name="create_new_task"),
 
     path('api/', include('api.urls'), name='API'),
 ]

@@ -53,7 +53,7 @@
                         <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                             Naloge
                             <div class="d-flex">
-                                <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewTask"/>
+                                <button class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
                                 <span><i class="fas fa-plus-square" style="color: gray"></i></span>
                                 </button>
                             </div>
@@ -89,35 +89,36 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" tabindex="-1" id="addNewTask" aria-labelledby="addNewTask" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Ustvari novo nalogo</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form method="POST" class="form-group" id="createNewTaskForm" action="">
-                            {% csrf_token %}
-                            <fieldset class="form-group">
-
-                                <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena
-                                    polja so obvezna.</i></p>
-                            </fieldset>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
-                        <button type="submit" form="createNewTaskForm" class="btn btn-success"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
+    </div>
+    <div id="taskModal" class="modal fade">
+        <div id="dialog" class="modal-dialog" hx-target="this"></div>
     </div>
 {% endblock %}
 
 {% block scripts %}
+    <script>
+    // Naloge
+    const task_modal = new bootstrap.Modal(document.getElementById("taskModal"))
+
+        htmx.on("htmx:afterSwap", (e) => {
+          // Response targeting #dialog => show the modal
+          if (e.detail.target.id == "dialog") {
+            task_modal.show()
+          }
+        })
+
+        htmx.on("htmx:beforeSwap", (e) => {
+      // Empty response targeting #dialog => hide the modal
+      if (e.detail.target.id == "dialog" && !e.detail.xhr.response) {
+        task_modal.hide()
+        e.detail.shouldSwap = false
+      }
+    })
+    htmx.on("hidden.bs.modal", () => {
+        document.getElementById("dialog").innerHTML = ""
+    })
+    </script>
     <script>
         $(function () {
             $.ajaxSetup({

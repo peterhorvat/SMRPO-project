@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'ckeditor',
     'django_otp',
     'django_otp.plugins.otp_totp',
-    'api.apps.ApiConfig'
+    'api.apps.ApiConfig',
+    'django_htmx'
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
 
 ROOT_URLCONF = 'Projekt.urls'

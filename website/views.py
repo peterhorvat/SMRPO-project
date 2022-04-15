@@ -13,7 +13,7 @@ from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, EditSprintFormAdmin
+    EditSprintForm, EditSprintFormAdmin, NalogaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga
 
 
@@ -319,3 +319,23 @@ def project_summary(request, project_id):
                       'clani': clani,
                       'sprinti': sprinti,
                    })
+
+
+@login_required
+def create_new_task(request, story_id):
+    if request.method == "POST":
+        form = NalogaForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.zgodba = Zgodba.objects.get(id=story_id)
+            task.save()
+            return HttpResponse(status=204, headers={'HX-Trigger': 'tasksListChanged'})
+
+    else:
+        form = NalogaForm()
+    return render(request, 'tasks_form.html', {
+        'form': form,
+    })
+
+
+
