@@ -70,9 +70,10 @@
                             <th scope="col">Ime</th>
                             <th scope="col">Opis</th>
                             <th scope="col">Čas</th>
-                            <th scope="col">Zadolžen</th>
                             <th scope="col">Status</th>
-
+                            <th scope="col">Zadolžen</th>
+                            <th scope="col"></th>
+                            <th scope="col"></th>
                         </tr>
                         </thead>
                         <tbody class="tasksTable" id="tasksTable{{ forloop.counter0 }}"  hx-trigger="load, tasksListChanged from:body"
@@ -117,7 +118,6 @@
     <script>
 
         ;(function () {
-
   const tasks_modal = new bootstrap.Modal(document.getElementById("taskModal"))
       document.body.addEventListener("tasksListChanged", function(evt){
           tasks_modal.hide()
@@ -131,12 +131,8 @@
   })
 
   htmx.on("htmx:beforeSwap", (e) => {
-    // Empty response targeting #dialog => hide the modal
-              console.log(e.detail.xhr.response)
-      console.log(!e.detail.xhr.response)
     if (e.detail.target.id == "dialog" && !e.detail.xhr.response) {
       tasks_modal.hide()
-        console.log(e.detail.xhr.response)
       e.detail.shouldSwap = false
     }
   })

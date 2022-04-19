@@ -346,22 +346,65 @@ def create_new_task(request, story_id):
             'form': form,
         })
 
+
+
 @login_required
 def accept_task(request, task_id):
             task = Naloga.objects.get(id=task_id)
             story = Zgodba.objects.get(id=task.zgodba_id)
             clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
             task.clan = clan
-            task.status = 0
+            task.status = 1
             task.save()
-
+            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
             return HttpResponse(status=204,
                                 headers={
                                     'HX-Trigger': json.dumps({
                                         "taskAccepted": None,
                                     }),
+                                    'HX-Redirect': url
                                 })
 
+@login_required
+def resign_task(request, task_id):
+            task = Naloga.objects.get(id=task_id)
+            task.clan = None
+            task.status = -1
+            task.save()
+            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
+            return HttpResponse(status=204,
+                                headers={
+                                    'HX-Trigger': json.dumps({
+                                        "taskResigned": None,
+                                    }),
+                                    'HX-Redirect': url
+                                })
+@login_required
+def start_task(request, task_id):
+            task = Naloga.objects.get(id=task_id)
+            task.status = 0
+            task.save()
+            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
+            return HttpResponse(status=204,
+                                headers={
+                                    'HX-Trigger': json.dumps({
+                                        "taskStarted": None,
+                                    }),
+                                    'HX-Redirect': url
+                                })
+@login_required
+def finish_task(request, task_id):
+            task = Naloga.objects.get(id=task_id)
+            task.status = 2
+            task.save()
+            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
+            return HttpResponse(status=204,
+                                headers={
+                                    'HX-Trigger': json.dumps({
+                                        "taskFinished": None,
+                                    }),
+                                    'HX-Redirect': url
+                                })
 
 @login_required
 def tasks_list(request, story_id):

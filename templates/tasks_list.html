@@ -1,17 +1,47 @@
-
 {% for task in tasks %}
-<tr id="task-{{ task.pk }}" class="task-row">
-    <td>{{ task.ime }}</td>
-    <td>{{ task.opis }}</td>
-    <td>{{ task.cas }}</td>
-    {% if task.clan|cut:" "  != "None" %}
-        <td>{{ task.clan }}</td>
-    {% else %}
-        <td>
-            <a hx-get="{% url 'accept_task' task.id %}"  class="link-success">Sprejmi</a>
-        </td>
-    {% endif %}
-    <td>{{ task.status }}</td>
+    <tr id="task-{{ task.pk }}" class="task-row">
+        <td class="col-2">{{ task.ime }}</td>
+        <td class="col-6">{{ task.opis }}</td>
+        <td class="col-2">{{ task.cas }}</td>
+        {% if task.status == -1 %}
+            <td class="col-4">Nedodeljena</td>
+        {% elif task.status == 1 %}
+            <td class="col-4">Dodeljena</td>
+        {% elif task.status == 0 %}
+            <td class="col-4">Aktivna</td>
+        {% elif task.status == 2 %}
+            <td class="col-4">Zaključena</td>
+        {% endif %}
+        {% if task.clan|cut:" "  != "None" %}
+            <td class="col-2">{{ task.clan.uporabnik.username }}</td>
+            {% if task.clan.uporabnik == request.user %}
+                <td class="col-2">
+                    <a hx-get="{% url 'resign_task' task.id %}" class="link-danger">Odstopi</a>
+                </td>
+                {% if task.status == 1 %}
+                    <td class="col-2">
+                        <a hx-get="{% url 'start_task' task.id %}" class="link-success">Začni</a>
+                    </td>
+                {% endif %}
+                {% if task.status == 0 %}
+                    <td class="col-2">
+                        <a hx-get="{% url 'finish_task' task.id %}" class="link-success">Zaključi</a>
+                    </td>
+                {% endif %}
+            {% else %}
+                <td class="col-2"></td>
+                <td class="col-2"></td>
 
-</tr>
+            {% endif %}
+        {% else %}
+            <td class="col-2">
+                <a hx-get="{% url 'accept_task' task.id %}" class="link-success">Sprejmi</a>
+            </td>
+            <td class="col-2">
+            </td>
+            <td class="col-2">
+            </td>
+        {% endif %}
+
+    </tr>
 {% endfor %}
