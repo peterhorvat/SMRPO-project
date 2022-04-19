@@ -179,4 +179,6 @@ class NewUporabnikForm(ModelForm):
 class NalogaForm(ModelForm):
     class Meta:
         model = Naloga
-        fields = ['ime', 'opis', 'status', 'clan', 'cas']
+        fields = ['ime', 'opis', 'cas']
+
+

@@ -24,13 +24,13 @@ def landing_page(request):
     else:
         user = Uporabnik.objects.get(pk=request.user.id)
         projekti = [i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
-            + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
-            + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]
+                   + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
+                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]
 
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
         "projekt_form": CreateNewProjectForm()
-    }, "user_types":["Product Owner", "Scrum Master", "Team Member "]})
+    }, "user_types": ["Product Owner", "Scrum Master", "Team Member "]})
 
 
 @login_required
@@ -177,7 +177,8 @@ def product_backlog(request, project_id):
 def edit_project(request, project_id):
     projekt = Projekt.objects.get(pk=project_id)
     if request.method == "GET":
-        return render(request, "edit_project_page.html", {"projekt_ime": projekt.ime, "projekt_opis": projekt.opis, "form": CreateNewProjectForm()})
+        return render(request, "edit_project_page.html",
+                      {"projekt_ime": projekt.ime, "projekt_opis": projekt.opis, "form": CreateNewProjectForm()})
     else:
         if request.POST["ime"] != projekt.ime:
             if len(Projekt.objects.filter(ime=request.POST["ime"])) == 0:
@@ -279,7 +280,8 @@ def sprint_list(request, project_id=None):
     except Projekt.DoesNotExist:
         izbran_projekt = None
     return render(request, 'sprint_list.html', {'sprinti': sprinti, 'projekti': projekti,
-                                                'izbran_projekt': izbran_projekt, 'cas': cas_now })
+                                                'izbran_projekt': izbran_projekt, 'cas': cas_now})
+
 
 @login_required
 @restrict_SM
@@ -318,23 +320,47 @@ def project_summary(request, project_id):
                       'projekt': instance,
                       'clani': clani,
                       'sprinti': sprinti,
-                   })
+                  })
 
 
+@login_required
 def create_new_task(request, story_id):
     if request.method == "POST":
         form = NalogaForm(request.POST)
         if form.is_valid():
             task = form.save(commit=False)
             task.zgodba = Zgodba.objects.get(id=story_id)
+            task.status = -1
             task.save()
-            return HttpResponse(status=204, headers={'HX-Trigger': 'tasksListChanged'})
-
+            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
+            return HttpResponse(status=204,
+                                headers={
+                                    'HX-Trigger': json.dumps({
+                                        "tasksListChanged": None,
+                                    }),
+                                    'HX-Redirect': url
+                                })
     else:
         form = NalogaForm()
-    return render(request, 'tasks_form.html', {
-        'form': form,
-    })
+        return render(request, 'tasks_form.html', {
+            'form': form,
+        })
+
+@login_required
+def accept_task(request, task_id):
+            task = Naloga.objects.get(id=task_id)
+            story = Zgodba.objects.get(id=task.zgodba_id)
+            clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+            task.clan = clan
+            task.status = 0
+            task.save()
+
+            return HttpResponse(status=204,
+                                headers={
+                                    'HX-Trigger': json.dumps({
+                                        "taskAccepted": None,
+                                    }),
+                                })
 
 
 @login_required
@@ -344,5 +370,3 @@ def tasks_list(request, story_id):
     return render(request, 'tasks_list.html', {
         'tasks': tasks,
     })
-
-

@@ -2,7 +2,7 @@
 <form hx-post="{{ request.path }}"  hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}' class="modal-content">
   {% csrf_token %}
   <div class="modal-header">
-    <h5 class="modal-title">Naloga</h5>
+    <h5 class="modal-title">Povabi k nalogi</h5>
   </div>
   <div class="modal-body">
     {{ form|crispy }}
@@ -11,6 +11,6 @@
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
       Prekliči
     </button>
-    <button type="submit" class="btn btn-primary">Dodaj Nalogo</button>
+    <button type="submit" class="btn btn-primary"> Povabi</button>
   </div>
 </form>

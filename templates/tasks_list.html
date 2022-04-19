@@ -1,8 +1,17 @@
+
 {% for task in tasks %}
 <tr id="task-{{ task.pk }}" class="task-row">
     <td>{{ task.ime }}</td>
     <td>{{ task.opis }}</td>
     <td>{{ task.cas }}</td>
-    <td>{{ task.clan }}</td>
+    {% if task.clan|cut:" "  != "None" %}
+        <td>{{ task.clan }}</td>
+    {% else %}
+        <td>
+            <a hx-get="{% url 'accept_task' task.id %}"  class="link-success">Sprejmi</a>
+        </td>
+    {% endif %}
+    <td>{{ task.status }}</td>
+
 </tr>
 {% endfor %}
