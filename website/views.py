@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
@@ -332,7 +333,7 @@ def create_new_task(request, story_id):
             task.zgodba = Zgodba.objects.get(id=story_id)
             task.status = -1
             task.save()
-            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
             return HttpResponse(status=204,
                                 headers={
                                     'HX-Trigger': json.dumps({
@@ -347,69 +348,125 @@ def create_new_task(request, story_id):
         })
 
 
-
 @login_required
 def accept_task(request, task_id):
-            task = Naloga.objects.get(id=task_id)
-            story = Zgodba.objects.get(id=task.zgodba_id)
-            clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-            task.clan = clan
-            task.status = 1
-            task.save()
-            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
-            return HttpResponse(status=204,
-                                headers={
-                                    'HX-Trigger': json.dumps({
-                                        "taskAccepted": None,
-                                    }),
-                                    'HX-Redirect': url
-                                })
+    task = Naloga.objects.get(id=task_id)
+    story = Zgodba.objects.get(id=task.zgodba_id)
+    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    task.clan = clan
+    task.status = 1
+    task.save()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    return HttpResponse(status=204,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                "taskAccepted": None,
+                            }),
+                            'HX-Redirect': url
+                        })
+
 
 @login_required
 def resign_task(request, task_id):
-            task = Naloga.objects.get(id=task_id)
-            task.clan = None
-            task.status = -1
-            task.save()
-            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
-            return HttpResponse(status=204,
-                                headers={
-                                    'HX-Trigger': json.dumps({
-                                        "taskResigned": None,
-                                    }),
-                                    'HX-Redirect': url
-                                })
+    task = Naloga.objects.get(id=task_id)
+    task.clan = None
+    task.status = -1
+    task.save()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    return HttpResponse(status=204,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                "taskResigned": None,
+                            }),
+                            'HX-Redirect': url
+                        })
+
+
 @login_required
 def start_task(request, task_id):
-            task = Naloga.objects.get(id=task_id)
-            task.status = 0
-            task.save()
-            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
-            return HttpResponse(status=204,
-                                headers={
-                                    'HX-Trigger': json.dumps({
-                                        "taskStarted": None,
-                                    }),
-                                    'HX-Redirect': url
-                                })
+    task = Naloga.objects.get(id=task_id)
+    task.status = 0
+    task.save()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    return HttpResponse(status=204,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                "taskStarted": None,
+                            }),
+                            'HX-Redirect': url
+                        })
+
+
 @login_required
 def finish_task(request, task_id):
-            task = Naloga.objects.get(id=task_id)
-            task.status = 2
-            task.save()
-            url = "http://"+request.get_host()+"/projects/"+str(task.zgodba.projekt_id)+"/prodcut_backlog/"
-            return HttpResponse(status=204,
-                                headers={
-                                    'HX-Trigger': json.dumps({
-                                        "taskFinished": None,
-                                    }),
-                                    'HX-Redirect': url
-                                })
+    task = Naloga.objects.get(id=task_id)
+    task.status = 2
+    task.save()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    return HttpResponse(status=204,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                "taskFinished": None,
+                            }),
+                            'HX-Redirect': url
+                        })
+
+@login_required
+def edit_task(request, pk):
+    task = get_object_or_404(Naloga, pk=pk)
+    if request.method == "POST":
+        form = NalogaForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+            return HttpResponse(
+                status=204,
+                headers={
+                    'HX-Trigger': json.dumps({
+                        "tasksListChanged": None,
+                    }),
+                    'HX-Redirect': url
+                }
+            )
+    else:
+        form = NalogaForm(instance=task)
+    return render(request, 'tasks_form.html', {
+        'form': form,
+        'task': task,
+    })
+
+@login_required
+def remove_task(request, pk):
+    task = get_object_or_404(Naloga, pk=pk)
+    task.delete()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    return HttpResponse(
+        status=204,
+        headers={
+            'HX-Trigger': json.dumps({
+                "tasksListChanged": None,
+            }),
+            'HX-Redirect': url
+        })
 
 @login_required
 def tasks_list(request, story_id):
     story = get_object_or_404(Zgodba, id=story_id)
     tasks = Naloga.objects.filter(zgodba=story)
+    canEdit = True
+    try:
+        clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    except Clan.DoesNotExist:
+        canEdit = False
+
+    if not canEdit:
+        try:
+            scrum_master = ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+        except Clan.DoesNotExist:
+            canEdit = False
+
+    #if clan can edit == true
     return render(request, 'tasks_list.html', {
         'tasks': tasks,
+        'canEdit': canEdit
     })

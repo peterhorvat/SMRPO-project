@@ -51,10 +51,13 @@ urlpatterns = [
 
     path("create_tasks/<int:story_id>/", v.create_new_task, name="create_new_task"),
     path("tasks_list/<int:story_id>/", v.tasks_list, name="tasks_list"),
+    path("edit_tasks/<int:task_id>/", v.edit_task, name="edit_task"),
     path("accept_task/<int:task_id>/", v.accept_task, name="accept_task"),
     path("resign_task/<int:task_id>/", v.resign_task, name="resign_task"),
     path("start_task/<int:task_id>/", v.start_task, name="start_task"),
     path("finish_task/<int:task_id>/", v.finish_task, name="finish_task"),
+    path('task/<int:pk>/edit', v.edit_task, name='edit_task'),
+    path('task/<int:pk>/remove', v.remove_task, name='remove_task'),
 
     path('api/', include('api.urls'), name='API'),
 ]

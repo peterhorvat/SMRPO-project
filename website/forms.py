@@ -71,9 +71,11 @@ class ZgodbaForm(ModelForm):
             'poslovna_vrednost': forms.NumberInput(attrs={'min': 1, 'max': 10})
         }
 
-#TODO: DATETIME NAMESTO DATE
+
+# TODO: DATETIME NAMESTO DATE
 class SprintForm(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all())
+
     class Meta:
         model = Sprint
         fields = ['ime', 'projekt', 'zacetni_cas', 'koncni_cas', 'hitrost']
@@ -99,7 +101,6 @@ class SprintForm(ModelForm):
 
 
 class EditSprintForm(ModelForm):
-
     class Meta:
         model = Sprint
         fields = ['ime', 'hitrost']
@@ -176,9 +177,8 @@ class NewUporabnikForm(ModelForm):
             'password': forms.PasswordInput(render_value=True),
         }
 
-class NalogaForm(ModelForm):
+
+class NalogaForm(forms.ModelForm):
     class Meta:
         model = Naloga
         fields = ['ime', 'opis', 'cas']
-
-

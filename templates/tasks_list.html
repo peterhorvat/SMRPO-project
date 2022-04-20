@@ -2,15 +2,15 @@
     <tr id="task-{{ task.pk }}" class="task-row">
         <td class="col-2">{{ task.ime }}</td>
         <td class="col-6">{{ task.opis }}</td>
-        <td class="col-2">{{ task.cas }}</td>
+        <td class="col-sm-2">{{ task.cas }}</td>
         {% if task.status == -1 %}
-            <td class="col-4">Nedodeljena</td>
+            <td class="col-sm-2">Nedodeljena</td>
         {% elif task.status == 1 %}
-            <td class="col-4">Dodeljena</td>
+            <td class="col-sm-2">Dodeljena</td>
         {% elif task.status == 0 %}
-            <td class="col-4">Aktivna</td>
+            <td class="col-sm-2">Aktivna</td>
         {% elif task.status == 2 %}
-            <td class="col-4">Zaključena</td>
+            <td class="col-sm-2">Zaključena</td>
         {% endif %}
         {% if task.clan|cut:" "  != "None" %}
             <td class="col-2">{{ task.clan.uporabnik.username }}</td>
@@ -29,19 +29,28 @@
                     </td>
                 {% endif %}
             {% else %}
-                <td class="col-2"></td>
-                <td class="col-2"></td>
 
             {% endif %}
         {% else %}
             <td class="col-2">
                 <a hx-get="{% url 'accept_task' task.id %}" class="link-success">Sprejmi</a>
             </td>
-            <td class="col-2">
-            </td>
-            <td class="col-2">
-            </td>
         {% endif %}
+            {% if canEdit %}
+            <td class="col">
+                <button class="btn btn-primary btn-sm" hx-get="{% url 'edit_task' pk=task.pk %}" hx-target="#dialog">
+                    <i class="fa fa-edit"></i>
+                </button>
+                        </td>
+
+                            <td class="col">
+
+               <button class="btn btn-danger btn-sm" hx-get="{% url 'remove_task' pk=task.pk %}" hx-target="#dialog">
+                    <i class="fa fa-trash"></i>
+
+               </button>
+            </td>
+            {% endif %}
 
     </tr>
 {% endfor %}
