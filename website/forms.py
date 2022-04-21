@@ -72,7 +72,6 @@ class ZgodbaForm(ModelForm):
         }
 
 
-# TODO: DATETIME NAMESTO DATE
 class SprintForm(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all())
 
@@ -87,7 +86,7 @@ class SprintForm(ModelForm):
         }
 
     def clean(self):
-        cleaned_data = self.cleaned_data  # individual field's clean methods have already been called
+        cleaned_data = self.cleaned_data
         zacetni_cas = cleaned_data.get("zacetni_cas")
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
@@ -118,8 +117,6 @@ class EditSprintFormAdmin(ModelForm):
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
-            'zacetni_cas': DateTimeInput(),
-            'koncni_cas': DateTimeInput(),
         }
 
     def clean(self):
@@ -127,7 +124,8 @@ class EditSprintFormAdmin(ModelForm):
         zacetni_cas = cleaned_data.get("zacetni_cas")
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
-        if Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exists():
+        if ("zacetni_cas" in self.changed_data or "koncni_cas" in self.changed_data) and \
+                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exists():
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")

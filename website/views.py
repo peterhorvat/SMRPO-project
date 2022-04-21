@@ -304,7 +304,6 @@ def edit_sprint(request, sprint_id):
     except Sprint.DoesNotExist:
         raise Http404
 
-
 @login_required
 @restrict_SM
 def delete_sprint(request, id):
@@ -455,14 +454,14 @@ def tasks_list(request, story_id):
     tasks = Naloga.objects.filter(zgodba=story)
     canEdit = True
     try:
-        clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+        Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
     except Clan.DoesNotExist:
         canEdit = False
 
     if not canEdit:
         try:
-            scrum_master = ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-        except Clan.DoesNotExist:
+            ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+        except ScrumMaster.DoesNotExist:
             canEdit = False
 
     #if clan can edit == true

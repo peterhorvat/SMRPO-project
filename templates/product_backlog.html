@@ -25,9 +25,18 @@
             {% for zgodba in zgodbe %}
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
-                        <h3 class="card-title text-center" style="margin-right: 5px">
-                            {{ zgodba.ime }}
-                        </h3>
+                        <div class="row align-items-center">
+                            <div class="col-1">
+                                {% comment %} IF: PREVERI ALI SO VSI POGOJI IZPOLNJENI {% endcomment %}
+                                <input class="form-check-input" type="checkbox" value="" id={{ zgodba.id }}>
+                            </div>
+                            <div class="col align-items-center">
+                                <h3 class="card-title text-center mb-0" style="margin-right: 5px">
+                                    {{ zgodba.ime }}
+                                </h3>
+                            </div>
+                        </div>
+
                         {% if product_owner is not None or scrum_master is not None %}
                             <div class="d-flex">
                                 <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
