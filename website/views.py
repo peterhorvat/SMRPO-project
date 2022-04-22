@@ -332,7 +332,7 @@ def create_new_task(request, story_id):
             task.zgodba = Zgodba.objects.get(id=story_id)
             task.status = -1
             task.save()
-            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(status=204,
                                 headers={
                                     'HX-Trigger': json.dumps({
@@ -355,7 +355,7 @@ def accept_task(request, task_id):
     task.clan = clan
     task.status = 1
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -371,7 +371,7 @@ def resign_task(request, task_id):
     task.clan = None
     task.status = -1
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -386,7 +386,7 @@ def start_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.status = 0
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -401,7 +401,7 @@ def finish_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.status = 2
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -417,7 +417,7 @@ def edit_task(request, pk):
         form = NalogaForm(request.POST, instance=task)
         if form.is_valid():
             form.save()
-            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(
                 status=204,
                 headers={
@@ -438,7 +438,7 @@ def edit_task(request, pk):
 def remove_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
     task.delete()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/product_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(
         status=204,
         headers={
