@@ -23,8 +23,15 @@
                 </td>
             {% endif %}
         {% elif task.status == 0 %}
-            {% if task.clan.uporabnik == request.user %}
+                            <td class="col-sm-2"> Na čakanju </td>
 
+            {% if task.clan.uporabnik == request.user %}
+            <td class="col-2">
+                <a hx-get="{% url 'resign_task' task.id %}" class="link-danger">Odstopi</a>
+            </td>
+                <td class="col-2">
+                    <a hx-get="{% url 'start_task' task.id %}" class="link-success">Začni</a>
+                </td>
             {% else %}
                 <td class="col-sm-2"> Na čakanju </td>
                 <td class="col-2">
@@ -38,7 +45,7 @@
                     {{  task.clan.uporabnik.username }}
             </td>
              <td class="col-2">
-                <a  class="link-succes">Beleži čas</a>
+                <a class="link-succes">Beleži čas</a>
             </td>
 
             <td class="col-2">
