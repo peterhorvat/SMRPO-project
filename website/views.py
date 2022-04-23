@@ -237,19 +237,6 @@ def update_user(request):
     return render(request, "uporabnik_form.html", context)
 
 
-def get_tasks_for_stories(stories):
-    r = []
-    for story in stories:
-        tasks = Naloga.objects.filter(zgodba=story)
-        finished_tasks = tasks.filter(status=Naloga.FINISHED).count()
-        story_dict = {
-            'zgodba': story,
-            'naloge_dokoncane': finished_tasks,
-            'naloge_vse': tasks.count()
-        }
-        r.append(story_dict)
-    return r
-
 @login_required
 def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
@@ -275,22 +262,44 @@ def product_backlog(request, project_id):
         redirect('/404')
 
     finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
-    context['finished_stories'] = finished_stories
-
     unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
 
     curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
-    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time)
+    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time).order_by('zacetni_cas')
     if len(past_sprints) > 0:
         past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
-        context['past_unfinished_stories'] = get_tasks_for_stories(past_unfinished_stories)
+        context['past_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in past_unfinished_stories
+        )
 
         rest_unfinished_stories = unfinished_stories.exclude(sprint__in=past_sprints)
         context['rest_unfinished_stories'] = ({'zgodba': story} for story in rest_unfinished_stories)
 
+        context['finished_stories'] = [
+            {
+                'sprint': sprint,
+                'zgodbe': [{'zgodba': story} for story in finished_stories.filter(sprint=sprint)]
+                if finished_stories.filter(sprint=sprint).count() != 0 else None
+            }
+            for sprint in past_sprints
+        ]
+
     try:
         curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
         context['current_sprint'] = curr_sprint
+        context['current_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in unfinished_stories.filter(sprint=curr_sprint)
+        )
     except Sprint.DoesNotExist:
         pass
 
