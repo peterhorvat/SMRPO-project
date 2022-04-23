@@ -11,9 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-import datetime
 from django.utils import timezone
-
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, EditSprintFormAdmin, NalogaForm
