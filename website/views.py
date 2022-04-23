@@ -341,7 +341,8 @@ def create_new_task(request, story_id):
                                     'HX-Redirect': url
                                 })
     else:
-        form = NalogaForm()
+        project_id =Zgodba.objects.get(id=story_id).projekt_id
+        form = NalogaForm(projekt_id=project_id)
         return render(request, 'tasks_form.html', {
             'form': form,
         })
@@ -428,7 +429,7 @@ def edit_task(request, pk):
                 }
             )
     else:
-        form = NalogaForm(instance=task)
+        form = NalogaForm(instance=task, site_id=task.zgodba.projekt_id)
     return render(request, 'tasks_form.html', {
         'form': form,
         'task': task,
