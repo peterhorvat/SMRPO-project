@@ -66,10 +66,13 @@
                     <div class="card">
                         <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                             Naloge
+
                             <div class="d-flex">
+                                {% if clan is not None or scrum_master is not None %}
                                 <button class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
                                     <span><i class="fas fa-plus-square" style="color: gray"></i></span>
                                 </button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
