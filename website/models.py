@@ -137,6 +137,7 @@ class Zgodba(models.Model):
                                             verbose_name="Poslovna vrednost zgodbe")
     prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Prioriteta")
     opombe = RichTextField(verbose_name="Opombe zgodbe")
+    realizirana = models.BooleanField(default=False, verbose_name="Realizirana zgodba")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

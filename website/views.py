@@ -237,25 +237,64 @@ def update_user(request):
     return render(request, "uporabnik_form.html", context)
 
 
+def get_tasks_for_stories(stories):
+    r = []
+    for story in stories:
+        tasks = Naloga.objects.filter(zgodba=story)
+        finished_tasks = tasks.filter(status=Naloga.FINISHED).count()
+        story_dict = {
+            'zgodba': story,
+            'naloge_dokoncane': finished_tasks,
+            'naloge_vse': tasks.count()
+        }
+        r.append(story_dict)
+    return r
+
 @login_required
 def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     context = {
-        'projekt': project
+        'projekt': project,
+        'form': ZgodbaForm
     }
-    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
-    sprints = Sprint.objects.filter(projekt=project,
-                                    zacetni_cas__lte=curr_time,
-                                    koncni_cas__gte=curr_time)
-    if len(sprints) > 0:
-        stories = Zgodba.objects.filter(sprint=sprints[0])
-        context['zgodbe'] = [
-            {'zgodba': story, 'naloge': Naloga.objects.filter(zgodba=story).order_by('status')}
-            for story in stories
-        ]
-        context['sprint'] = sprints[0]
+    try:
+        clan = Clan.objects.get(uporabnik=request.user, projekt=project)
+    except ObjectDoesNotExist:
+        clan = None
+    try:
+        scrum_master = ScrumMaster.objects.get(uporabnik=request.user, projekt=project)
+        context['scrum_master'] = scrum_master
+    except ObjectDoesNotExist:
+        scrum_master = None
+    try:
+        project_owner = ProjectOwner.objects.get(uporabnik=request.user, projekt=project)
+        context['project_owner'] = project_owner
+    except ObjectDoesNotExist:
+        project_owner = None
+    if clan is None and project_owner is None and scrum_master is None:
+        redirect('/404')
 
-    return render(request, "product_backlog.html", context)
+    finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
+    context['finished_stories'] = finished_stories
+
+    unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
+
+    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
+    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time)
+    if len(past_sprints) > 0:
+        past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
+        context['past_unfinished_stories'] = get_tasks_for_stories(past_unfinished_stories)
+
+        rest_unfinished_stories = unfinished_stories.exclude(sprint__in=past_sprints)
+        context['rest_unfinished_stories'] = ({'zgodba': story} for story in rest_unfinished_stories)
+
+    try:
+        curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
+        context['current_sprint'] = curr_sprint
+    except Sprint.DoesNotExist:
+        pass
+
+    return render(request, "product_backlog/product_backlog.html", context)
 
 
 def missing(request):
@@ -323,11 +362,15 @@ def project_summary(request, project_id):
     instance = get_object_or_404(Projekt, id=project_id)
     clani = Clan.objects.filter(projekt=instance)
     sprinti = Sprint.objects.filter(projekt=instance)
+    scrum_master = ScrumMaster.objects.get(projekt=instance)
+    project_owner = ProjectOwner.objects.get(projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
                       'clani': clani,
                       'sprinti': sprinti,
+                      'scrum_master': scrum_master,
+                      'project_owner': project_owner
                   })
 
 
