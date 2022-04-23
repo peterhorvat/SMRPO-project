@@ -325,12 +325,17 @@ def project_summary(request, project_id):
 
 @login_required
 def create_new_task(request, story_id):
+    project_id = Zgodba.objects.get(id=story_id).projekt_id
     if request.method == "POST":
         form = NalogaForm(request.POST)
+        form.fields['clan'].queryset = Clan.objects.filter(projekt_id=project_id)
         if form.is_valid():
             task = form.save(commit=False)
             task.zgodba = Zgodba.objects.get(id=story_id)
-            task.status = -1
+            if task.clan:
+                task.status = 0
+            else:
+                task.status = -1
             task.save()
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(status=204,
@@ -341,7 +346,6 @@ def create_new_task(request, story_id):
                                     'HX-Redirect': url
                                 })
     else:
-        project_id =Zgodba.objects.get(id=story_id).projekt_id
         form = NalogaForm(projekt_id=project_id)
         return render(request, 'tasks_form.html', {
             'form': form,
@@ -416,8 +420,15 @@ def edit_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
     if request.method == "POST":
         form = NalogaForm(request.POST, instance=task)
+        form.fields['clan'].queryset = Clan.objects.filter(projekt_id=task.zgodba.projekt_id)
         if form.is_valid():
-            form.save()
+            task = form.save(commit=False)
+            if task.clan:
+                task.status = 0
+            else:
+                task.status = -1
+            task.save()
+
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(
                 status=204,
@@ -429,7 +440,8 @@ def edit_task(request, pk):
                 }
             )
     else:
-        form = NalogaForm(instance=task, site_id=task.zgodba.projekt_id)
+        project_id = task.zgodba.projekt_id
+        form = NalogaForm(instance=task, projekt_id=project_id)
     return render(request, 'tasks_form.html', {
         'form': form,
         'task': task,
@@ -453,23 +465,30 @@ def remove_task(request, pk):
 def tasks_list(request, story_id):
     story = get_object_or_404(Zgodba, id=story_id)
     tasks = Naloga.objects.filter(zgodba=story)
-    canEdit = False
-    CanAccept = False
-    CanCreate = False
+    canEdit = True
+    canAccept = True
+    canCreate = True
     try:
         Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
     except Clan.DoesNotExist:
-        canEdit = True
-        canAccept=  True
+        canEdit = False
+        canAccept = False
+        canCreate = False
 
     if not canEdit:
         try:
+            canEdit = True
+            canAccept = True
+            canCreate = True
             ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
         except ScrumMaster.DoesNotExist:
             canEdit = False
+            canAccept = False
+            canCreate = False
 
-    #if clan can edit == true
     return render(request, 'tasks_list.html', {
         'tasks': tasks,
-        'canEdit': canEdit
+        'canEdit': canEdit,
+        'canAccept': canAccept,
+        'canCreate': canCreate
     })
