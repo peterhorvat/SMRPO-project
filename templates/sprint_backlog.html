@@ -61,17 +61,18 @@
                         <p class="card-text">Poslovna vrednost: {{ zgodba.poslovna_vrednost }}</p>
                         <p class="card-text">Prioriteta: {{ zgodba.get_prioriteta_display }}</p>
                     </div>
-                    {% now "Y-m-d" as todays_date %}
-
                     <div class="card">
                         <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                             Naloge
 
                             <div class="d-flex">
-                                {% if clan is not None or scrum_master is not None %}
-                                <button class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
+                                {% if clan is not None or scrum_master is not None  %}
+                                    {% if zgodba.canAddTask %}
+                                <button  class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
                                     <span><i class="fas fa-plus-square" style="color: gray"></i></span>
                                 </button>
+                                    {% endif %}
+
                                 {% endif %}
                             </div>
                         </div>
@@ -127,7 +128,6 @@
 
 {% block scripts %}
     <script>
-
         ;(function () {
   const tasks_modal = new bootstrap.Modal(document.getElementById("taskModal"))
       document.body.addEventListener("tasksListChanged", function(evt){
