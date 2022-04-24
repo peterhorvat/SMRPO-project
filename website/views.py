@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
+
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, EditSprintFormAdmin, NalogaForm
@@ -345,6 +347,8 @@ def sprint_list(request, project_id=None):
 def edit_sprint(request, sprint_id):
     try:
         instance = get_object_or_404(Sprint, id=sprint_id)
+        if instance.zacel():
+            raise PermissionDenied
         if request.method == 'POST':
             form = EditSprintForm(request.POST or None, instance=instance)
             if request.user.is_superuser:
@@ -363,7 +367,11 @@ def edit_sprint(request, sprint_id):
 @login_required
 @restrict_SM
 def delete_sprint(request, id):
-    Sprint.objects.filter(id=id).delete()
+    instance = Sprint.objects.get(id=id)
+    if instance.zacel():
+        raise PermissionDenied
+    else:
+        instance.delete()
     return redirect("sprint_list")
 
 

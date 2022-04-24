@@ -5,8 +5,8 @@ from website.models import ScrumMaster, ProjectOwner
 
 def restrict_SM(function):
     def wrap(request, *args, **kwargs):
-        if request.user.is_superuser:
-            return function(request, *args, **kwargs)
+        # if request.user.is_superuser:
+        #     return function(request, *args, **kwargs)
         try:
             ScrumMaster.objects.get(uporabnik=request.user)
 

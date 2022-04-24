@@ -113,6 +113,9 @@ class Sprint(models.Model):
         razlika = self.koncni_cas-datetime.now(pytz.timezone('Europe/Ljubljana'))
         return razlika.days < 2
 
+    def zacel(self):
+        return self.zacetni_cas.timestamp() < datetime.now().timestamp()
+
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"
 
