@@ -1,14 +1,12 @@
 <div>
-    <h4>Sprint: {{ sprint_object.sprint.ime }}</h4>
-    {% if sprint_object.zgodbe is None %}
+    <h2>Sprint: {{ sprint_object.sprint.ime }}</h2>
+    {% for zgodba_object in sprint_object.zgodbe %}
+        {% include 'product_backlog/story.html' %}
+    {% empty %}
         <div class="card">
             <div class="card-body">
                 <p class="card-text">V tem sprintu ni bilo dokončanih nalog</p>
             </div>
         </div>
-    {% else %}
-        {% for zgodba_object in sprint_object.zgodbe %}
-            {% include 'product_backlog/story.html' %}
-        {% endfor %}
-    {% endif %}
+    {% endfor %}
 </div>
