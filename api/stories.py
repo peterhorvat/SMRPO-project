@@ -6,9 +6,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.forms.models import model_to_dict
 
-from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan
+from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga
 from website.forms import ZgodbaForm
-from website.decorators import restrict_PO_SM
+from website.decorators import restrict_PO_SM, restrict_PO
 
 
 class StoriesApi(View):
@@ -83,6 +83,32 @@ class StoriesApi(View):
                 return JsonResponse({'Message': 'Zgodba ne obstaja.'}, status=404)
             except IntegrityError as e:
                 return JsonResponse({'Message': f'Integrity error: {str(e)}'}, status=403)
+
+
+class StoriesConfirmApi(View):
+
+    @method_decorator(login_required)
+    @method_decorator(restrict_PO)
+    def post(self, request, project_id, story_id):
+        try:
+            project = Projekt.objects.get(id=project_id)
+        except Projekt.DoesNotExist:
+            return JsonResponse({'Message': 'Projekt ne obstaja!'}, status=404)
+        try:
+            story = Zgodba.objects.get(projekt=project, id = story_id)
+            finished_tasks = Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count()
+            all_tasks = Naloga.objects.filter(zgodba=story).count()
+            if story.realizirana:
+                return JsonResponse({'Message': 'Zgodba je že realizirana!'}, status=400)
+            if all_tasks == 0:
+                return JsonResponse({'Message': 'Zgodba nima nobenih nalog!'}, status=400)
+            if finished_tasks != all_tasks:
+                return JsonResponse({'Message': 'Vse naloge še niso dokončane!'}, status=400)
+            story.realizirana = True
+            story.save()
+            return JsonResponse({'Message': 'Success.'}, status=200)
+        except Zgodba.DoesNotExist:
+            return JsonResponse({'Message': 'Zgodba ne obstaja!'}, status=404)
 
 
 def check_credentials(project_id, user_id):

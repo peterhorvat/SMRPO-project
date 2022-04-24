@@ -1,0 +1,54 @@
+<div class="card">
+    <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
+        <div>
+            <h4 class="card-title" style="margin-right: 5px">{{ zgodba_object.zgodba.ime }}</h4>
+            {% if zgodba_object.zgodba.sprint %}
+                <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
+            {% endif %}
+        </div>
+        {% if project_owner is not None or scrum_master is not None %}
+            <div class="d-flex">
+                <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
+                        data-bs-Ime="{{ zgodba_object.zgodba.ime }}"
+                        data-bs-Vsebina="{{ zgodba_object.zgodba.vsebina }}"
+                        data-bs-SprejemniTesti="{{ zgodba_object.zgodba.sprejemni_testi }}"
+                        data-bs-Vrednost="{{ zgodba_object.zgodba.poslovna_vrednost }}"
+                        data-bs-Prioritety="{{ zgodba_object.zgodba.get_prioriteta_display }}"
+                        data-bs-Gumb="Posodobi zgodbo"
+                        data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/">
+                    <span><i class="fas fa-edit" style="color: gray"></i></span>
+                </button>
+                <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"><span><i
+                        class="fas fa-times" style="color: red"></i></span></button>
+            </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <h5>Vsebina:</h5>
+        <p class="card-text">{{ zgodba_object.zgodba.vsebina|linebreaks }}</p>
+        <h5>Sprejemni testi:</h5>
+        <p class="card-text">{{ zgodba_object.zgodba.sprejemni_testi|linebreaks }}</p>
+        <p class="card-text">Poslovna vrednost: {{ zgodba_object.zgodba.poslovna_vrednost }}</p>
+        <p class="card-text">Prioriteta: {{ zgodba_object.zgodba.get_prioriteta_display }}</p>
+    </div>
+    <div class="card-footer d-flex align-items-baseline" style="justify-content: space-between">
+        {% if not zgodba_object.zgodba.realizirana and zgodba_object.naloge_vse is not None and zgodba_object.naloge_dokoncane is not None %}
+            <div class="">
+                <p>Število nalog: {{ zgodba_object.naloge_vse }}</p>
+                <p>Število dokončanih nalog: {{ zgodba_object.naloge_dokoncane }}</p>
+            </div>
+            {% if project_owner %}
+                <div>
+                    <button type="button" class="btn btn-success"
+                            {% if zgodba_object.naloge_vse == 0 or zgodba_object.naloge_dokoncane != zgodba_object.naloge_vse %}
+                                disabled
+                            {% endif %}
+                        onclick="confirmStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"
+                    >Potrdi zgodbo
+                    </button>
+                    <button type="button" class="btn btn-danger">Zavrni zgodbo</button>
+                </div>
+            {% endif %}
+    {% endif %}
+    </div>
+</div>

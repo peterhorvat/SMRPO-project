@@ -4,7 +4,7 @@ import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga
+from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan
 
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
@@ -179,4 +179,9 @@ class NewUporabnikForm(ModelForm):
 class NalogaForm(forms.ModelForm):
     class Meta:
         model = Naloga
-        fields = ['ime', 'opis', 'cas']
+        fields = ['ime', 'opis', 'cas', 'clan']
+
+    def __init__(self, *args, **kwargs):
+        projekt_id = kwargs.pop('projekt_id', None)
+        super(NalogaForm, self).__init__(*args, **kwargs)
+        self.fields['clan'].queryset = Clan.objects.filter(projekt_id=projekt_id)

@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
-
+from django.utils import timezone
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, EditSprintFormAdmin, NalogaForm
@@ -145,9 +145,17 @@ def loginOTP(request):
 
 
 @login_required
-def product_backlog(request, project_id):
+def sprint_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     stories = Zgodba.objects.filter(projekt=project)
+    for story in stories:
+        if story.sprint is None:
+            story.canAddTask = False
+        else:
+            if story.sprint.zacetni_cas < timezone.now() < story.sprint.koncni_cas:
+                story.canAddTask=True
+            else:
+                story.canAddTask=False
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:
@@ -171,7 +179,7 @@ def product_backlog(request, project_id):
         'form': ZgodbaForm()
     }
 
-    return render(request=request, template_name="product_backlog.html", context=context)
+    return render(request=request, template_name="sprint_backlog.html", context=context)
 
 
 @login_required
@@ -230,24 +238,72 @@ def update_user(request):
 
 
 @login_required
-def sprint_backlog(request, project_id):
+def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     context = {
-        'projekt': project
+        'projekt': project,
+        'form': ZgodbaForm
     }
-    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
-    sprints = Sprint.objects.filter(projekt=project,
-                                    zacetni_cas__lte=curr_time,
-                                    koncni_cas__gte=curr_time)
-    if len(sprints) > 0:
-        stories = Zgodba.objects.filter(sprint=sprints[0])
-        context['zgodbe'] = [
-            {'zgodba': story, 'naloge': Naloga.objects.filter(zgodba=story).order_by('status')}
-            for story in stories
-        ]
-        context['sprint'] = sprints[0]
+    try:
+        clan = Clan.objects.get(uporabnik=request.user, projekt=project)
+    except ObjectDoesNotExist:
+        clan = None
+    try:
+        scrum_master = ScrumMaster.objects.get(uporabnik=request.user, projekt=project)
+        context['scrum_master'] = scrum_master
+    except ObjectDoesNotExist:
+        scrum_master = None
+    try:
+        project_owner = ProjectOwner.objects.get(uporabnik=request.user, projekt=project)
+        context['project_owner'] = project_owner
+    except ObjectDoesNotExist:
+        project_owner = None
+    if clan is None and project_owner is None and scrum_master is None:
+        redirect('/404')
 
-    return render(request, "sprint_backlog.html", context)
+    finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
+    unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
+
+    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
+    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time).order_by('zacetni_cas')
+    if len(past_sprints) > 0:
+        past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
+        context['past_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in past_unfinished_stories
+        )
+
+        rest_unfinished_stories = unfinished_stories.exclude(sprint__in=past_sprints)
+        context['rest_unfinished_stories'] = ({'zgodba': story} for story in rest_unfinished_stories)
+
+        context['finished_stories'] = [
+            {
+                'sprint': sprint,
+                'zgodbe': [{'zgodba': story} for story in finished_stories.filter(sprint=sprint)]
+                if finished_stories.filter(sprint=sprint).count() != 0 else None
+            }
+            for sprint in past_sprints
+        ]
+
+    try:
+        curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
+        context['current_sprint'] = curr_sprint
+        context['current_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in unfinished_stories.filter(sprint=curr_sprint)
+        )
+    except Sprint.DoesNotExist:
+        pass
+
+    return render(request, "product_backlog/product_backlog.html", context)
 
 
 def missing(request):
@@ -315,24 +371,33 @@ def project_summary(request, project_id):
     instance = get_object_or_404(Projekt, id=project_id)
     clani = Clan.objects.filter(projekt=instance)
     sprinti = Sprint.objects.filter(projekt=instance)
+    scrum_master = ScrumMaster.objects.get(projekt=instance)
+    project_owner = ProjectOwner.objects.get(projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
                       'clani': clani,
                       'sprinti': sprinti,
+                      'scrum_master': scrum_master,
+                      'project_owner': project_owner
                   })
 
 
 @login_required
 def create_new_task(request, story_id):
+    project_id = Zgodba.objects.get(id=story_id).projekt_id
     if request.method == "POST":
         form = NalogaForm(request.POST)
+        form.fields['clan'].queryset = Clan.objects.filter(projekt_id=project_id)
         if form.is_valid():
             task = form.save(commit=False)
             task.zgodba = Zgodba.objects.get(id=story_id)
-            task.status = -1
+            if task.clan:
+                task.status = 0
+            else:
+                task.status = -1
             task.save()
-            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(status=204,
                                 headers={
                                     'HX-Trigger': json.dumps({
@@ -341,7 +406,7 @@ def create_new_task(request, story_id):
                                     'HX-Redirect': url
                                 })
     else:
-        form = NalogaForm()
+        form = NalogaForm(projekt_id=project_id)
         return render(request, 'tasks_form.html', {
             'form': form,
         })
@@ -355,7 +420,7 @@ def accept_task(request, task_id):
     task.clan = clan
     task.status = 1
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -371,7 +436,7 @@ def resign_task(request, task_id):
     task.clan = None
     task.status = -1
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -386,7 +451,7 @@ def start_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.status = 0
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -401,7 +466,7 @@ def finish_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.status = 2
     task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
                             'HX-Trigger': json.dumps({
@@ -415,9 +480,16 @@ def edit_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
     if request.method == "POST":
         form = NalogaForm(request.POST, instance=task)
+        form.fields['clan'].queryset = Clan.objects.filter(projekt_id=task.zgodba.projekt_id)
         if form.is_valid():
-            form.save()
-            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+            task = form.save(commit=False)
+            if task.clan:
+                task.status = 0
+            else:
+                task.status = -1
+            task.save()
+
+            url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(
                 status=204,
                 headers={
@@ -428,7 +500,8 @@ def edit_task(request, pk):
                 }
             )
     else:
-        form = NalogaForm(instance=task)
+        project_id = task.zgodba.projekt_id
+        form = NalogaForm(instance=task, projekt_id=project_id)
     return render(request, 'tasks_form.html', {
         'form': form,
         'task': task,
@@ -438,7 +511,7 @@ def edit_task(request, pk):
 def remove_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
     task.delete()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/prodcut_backlog/"
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(
         status=204,
         headers={
@@ -453,19 +526,29 @@ def tasks_list(request, story_id):
     story = get_object_or_404(Zgodba, id=story_id)
     tasks = Naloga.objects.filter(zgodba=story)
     canEdit = True
+    canAccept = True
+    canCreate = True
     try:
         Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
     except Clan.DoesNotExist:
         canEdit = False
+        canAccept = False
+        canCreate = False
 
     if not canEdit:
         try:
+            canEdit = True
+            canAccept = True
+            canCreate = True
             ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
         except ScrumMaster.DoesNotExist:
             canEdit = False
+            canAccept = False
+            canCreate = False
 
-    #if clan can edit == true
     return render(request, 'tasks_list.html', {
         'tasks': tasks,
-        'canEdit': canEdit
+        'canEdit': canEdit,
+        'canAccept': canAccept,
+        'canCreate': canCreate
     })
