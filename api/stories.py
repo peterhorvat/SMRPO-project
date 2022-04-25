@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.forms.models import model_to_dict
 
 from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga
-from website.forms import ZgodbaForm
+from website.forms import ZgodbaForm, ZgodbaOpombeForm
 from website.decorators import restrict_PO_SM, restrict_PO
 
 
@@ -114,6 +114,34 @@ class StoriesConfirmApi(View):
             return JsonResponse({'Message': 'Success.'}, status=200)
         except Zgodba.DoesNotExist:
             return JsonResponse({'Message': 'Zgodba ne obstaja!'}, status=404)
+
+
+class StoriesRejectApi(View):
+
+    @method_decorator(login_required)
+    @method_decorator(restrict_PO)
+    def post(self, request, project_id, story_id):
+        try:
+            project = Projekt.objects.get(id=project_id)
+        except Projekt.DoesNotExist:
+            return JsonResponse({'Message': 'Projekt ne obstaja!'}, status=404)
+        try:
+            story = Zgodba.objects.get(projekt=project, id=story_id)
+        except Zgodba.DoesNotExist:
+            return JsonResponse({'Message': 'Zgodba ne obstaja!'}, status=404)
+        if story.sprint is None:
+            return JsonResponse({'Message': 'Zgodba ni dodeljena nobenemu sprintu!'}, status=400)
+        if story.realizirana:
+            return JsonResponse({'Message': 'Zgodba je že dokončana!'}, status=400)
+        opombeForm = ZgodbaOpombeForm(request.POST, instance=story)
+        if opombeForm.is_valid():
+            story.opombe = opombeForm.cleaned_data['opombe']
+            story.sprint = None
+            story.save()
+            return JsonResponse({'Message': 'Zgodba uspešno zavrnjena.'}, status=200)
+        else:
+            return JsonResponse({'Message': 'Nepravilno vnešene opombe!'}, status=400)
+
 
 
 def check_credentials(project_id, user_id):

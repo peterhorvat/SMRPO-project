@@ -185,3 +185,9 @@ class NalogaForm(forms.ModelForm):
         projekt_id = kwargs.pop('projekt_id', None)
         super(NalogaForm, self).__init__(*args, **kwargs)
         self.fields['clan'].queryset = Clan.objects.filter(projekt_id=projekt_id)
+
+
+class ZgodbaOpombeForm(forms.ModelForm):
+    class Meta:
+        model = Zgodba
+        fields = ['opombe']
