@@ -16,8 +16,8 @@ from rest_framework.exceptions import PermissionDenied
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, EditSprintFormAdmin, NalogaForm, ZgodbaOpombeForm
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga
+    EditSprintForm, EditSprintFormAdmin, NalogaForm, ZgodbaOpombeForm, ObjavaForm
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
 
 
 @login_required
@@ -382,13 +382,16 @@ def project_summary(request, project_id):
     sprinti = Sprint.objects.filter(projekt=instance)
     scrum_master = ScrumMaster.objects.get(projekt=instance)
     project_owner = ProjectOwner.objects.get(projekt=instance)
+    project_posts = Objava.objects.filter(projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
                       'clani': clani,
                       'sprinti': sprinti,
                       'scrum_master': scrum_master,
-                      'project_owner': project_owner
+                      'project_owner': project_owner,
+                      'project_posts': project_posts,
+                      'post_form': ObjavaForm
                   })
 
 

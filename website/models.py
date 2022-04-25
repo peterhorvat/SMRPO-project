@@ -198,8 +198,10 @@ class Komentar(models.Model):
 
 
 class Objava(models.Model):
-    naslov = models.CharField(max_length=255, null=True, blank=True, verbose_name="Naslov objave")
-    clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    naslov = models.CharField(max_length=255, verbose_name="Naslov objave")
+    uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
+    vsebina = RichTextField(verbose_name="Vsebina objave")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

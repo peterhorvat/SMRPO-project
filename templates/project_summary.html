@@ -111,8 +111,92 @@
                         </table>
                     </div>
                 </div>
+
+                <div id="zid">
+                    <div class="d-flex align-items-baseline" style="justify-content: space-between">
+                        <h4>Projektni zid</h4>
+                        <button class="btn pull-right btn-success text-right float-right justify-position-end"
+                                data-bs-toggle="modal" data-bs-target="#addNewPost"
+                                data-bs-Action="/api/projects/{{ projekt.id }}/posts/">
+                            <i class="fa fa-plus"></i> Dodaj objavo
+                        </button>
+                    </div>
+                    <br/>
+                    <div>
+                        {% for post in project_posts %}
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{{ post.naslov }}</h5>
+                                    <p class="card-text">Uporabnik: {{ post.uporabnik.username }}</p>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ post.vsebina|linebreaks }}</p>
+                                </div>
+                            </div>
+                            <br/>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" tabindex="-1" id="addNewPost" aria-labelledby="addNewPost" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj objavo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" class="form-group" id="addNewPostForm" action="">
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            {{ post_form|crispy }}
+                            <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
+                    <button type="submit" form="addNewPostForm" class="btn btn-success">Objavi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(function () {
+            $.ajaxSetup({
+                headers: {
+                    "X-CSRFToken": $('[name=csrfmiddlewaretoken]').val()
+                }
+            })
+        });
+
+        let modalPost = document.getElementById("addNewPost");
+        let formPost = document.getElementById("addNewPostForm");
+
+        modalPost.addEventListener("show.bs.modal", function (event) {
+            let button = event.relatedTarget;
+            formPost.action = button.getAttribute("data-bs-Action");
+        });
+
+        formPost.addEventListener("submit", function (event) {
+           event.preventDefault();
+           $.post(formPost.action, $(this).serialize())
+               .done(function () {
+                   location.reload();
+               })
+               .fail(function (jqXHR, textStatus, errorThrown) {
+                   if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
+                        alert(jqXHR.responseJSON.Message);
+                    } else {
+                        alert(errorThrown);
+                    }
+               });
+        });
+    </script>
 {% endblock %}

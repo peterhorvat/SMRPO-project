@@ -129,7 +129,6 @@
                     location.reload();
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR);
                     if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
                         alert(jqXHR.responseJSON.Message);
                     } else {

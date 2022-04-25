@@ -6,6 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from django.forms.models import model_to_dict
 
+from api.helper import is_in_project
 from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga
 from website.forms import ZgodbaForm, ZgodbaOpombeForm
 from website.decorators import restrict_PO_SM, restrict_PO
@@ -143,7 +144,6 @@ class StoriesRejectApi(View):
             return JsonResponse({'Message': 'Nepravilno vnešene opombe!'}, status=400)
 
 
-
 def check_credentials(project_id, user_id):
     try:
         project = Projekt.objects.get(pk=project_id)
@@ -151,15 +151,6 @@ def check_credentials(project_id, user_id):
         return project, user
     except ObjectDoesNotExist:
         return JsonResponse({'Message': 'Projekt ali uporabnik ne obstaja.'}, status=404)
-
-
-def is_in_project(user, project):
-    try:
-        return ScrumMaster.objects.filter(projekt=project, uporabnik=user).count() == 1 \
-            or ProjectOwner.objects.filter(projekt=project, uporabnik=user).count() == 1 \
-            or Clan.objects.filter(projekt=project, uporabnik=user).count() > 0
-    except Exception:
-        return False
 
 
 def is_name_valid(name, project, story_id = None):

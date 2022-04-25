@@ -4,7 +4,7 @@ import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan
+from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan, Objava
 
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
@@ -191,3 +191,8 @@ class ZgodbaOpombeForm(forms.ModelForm):
     class Meta:
         model = Zgodba
         fields = ['opombe']
+
+class ObjavaForm(forms.ModelForm):
+    class Meta:
+        model = Objava
+        fields = ['naslov', 'vsebina']

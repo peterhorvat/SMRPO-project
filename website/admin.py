@@ -63,8 +63,8 @@ class KomentarAdmin(admin.ModelAdmin):
 
 
 class ObjavaAdmin(admin.ModelAdmin):
-    search_fields = ('clan',)
-    list_display = ['clan', 'naslov']
+    search_fields = ('uporabnik',)
+    list_display = ['uporabnik', 'projekt', 'naslov']
     # list_filter = []
 
 

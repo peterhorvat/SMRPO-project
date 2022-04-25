@@ -32,6 +32,11 @@
         <p class="card-text">{{ zgodba_object.zgodba.sprejemni_testi|linebreaks }}</p>
         <p class="card-text">Poslovna vrednost: {{ zgodba_object.zgodba.poslovna_vrednost }}</p>
         <p class="card-text">Prioriteta: {{ zgodba_object.zgodba.get_prioriteta_display }}</p>
+        {% if zgodba_object.zgodba.opombe %}
+            <hr/>
+            <h5>Opombe:</h5>
+            <p class="card-text">{{ zgodba_object.zgodba.opombe|linebreaks }}</p>
+        {% endif %}
     </div>
     <div class="card-footer d-flex align-items-baseline" style="justify-content: space-between">
         {% if not zgodba_object.zgodba.realizirana and zgodba_object.naloge_vse is not None and zgodba_object.naloge_dokoncane is not None %}
@@ -48,7 +53,10 @@
                         onclick="confirmStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"
                     >Potrdi zgodbo
                     </button>
-                    <button type="button" class="btn btn-danger">Zavrni zgodbo</button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                        data-bs-target="#addNote" data-bs-Opombe="{{ zgodba_object.zgodba.opombe }}"
+                        data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/reject/"
+                    >Zavrni zgodbo</button>
                 </div>
             {% endif %}
     {% endif %}
