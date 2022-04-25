@@ -7,20 +7,22 @@
             {% endif %}
         </div>
         {% if project_owner is not None or scrum_master is not None %}
-            <div class="d-flex">
-                <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
-                        data-bs-Ime="{{ zgodba_object.zgodba.ime }}"
-                        data-bs-Vsebina="{{ zgodba_object.zgodba.vsebina }}"
-                        data-bs-SprejemniTesti="{{ zgodba_object.zgodba.sprejemni_testi }}"
-                        data-bs-Vrednost="{{ zgodba_object.zgodba.poslovna_vrednost }}"
-                        data-bs-Prioritety="{{ zgodba_object.zgodba.get_prioriteta_display }}"
-                        data-bs-Gumb="Posodobi zgodbo"
-                        data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/">
-                    <span><i class="fas fa-edit" style="color: gray"></i></span>
-                </button>
-                <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"><span><i
-                        class="fas fa-times" style="color: red"></i></span></button>
-            </div>
+            {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.sprint == None %}
+                <div class="d-flex">
+                    <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
+                            data-bs-Ime="{{ zgodba_object.zgodba.ime }}"
+                            data-bs-Vsebina="{{ zgodba_object.zgodba.vsebina }}"
+                            data-bs-SprejemniTesti="{{ zgodba_object.zgodba.sprejemni_testi }}"
+                            data-bs-Vrednost="{{ zgodba_object.zgodba.poslovna_vrednost }}"
+                            data-bs-Prioritety="{{ zgodba_object.zgodba.get_prioriteta_display }}"
+                            data-bs-Gumb="Posodobi zgodbo"
+                            data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/">
+                        <span><i class="fas fa-edit" style="color: gray"></i></span>
+                    </button>
+                    <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"><span><i
+                            class="fas fa-times" style="color: red"></i></span></button>
+                </div>
+            {% endif %}
         {% endif %}
     </div>
     <div class="card-body">

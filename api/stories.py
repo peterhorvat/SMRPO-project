@@ -27,7 +27,7 @@ class StoriesApi(View):
             return JsonResponse({'Message': [model_to_dict(s) for s in stories]}, status=200)
         else:
             try:
-                story = Zgodba.objects.get(story_id=story_id, projekt=project)
+                story = Zgodba.objects.get(id=story_id, projekt=project)
                 return JsonResponse({'Message': model_to_dict(story)}, status=200)
             except ObjectDoesNotExist:
                 return JsonResponse({'Message': 'Zgodba ne obstaja.'}, status=404)
@@ -57,6 +57,8 @@ class StoriesApi(View):
                 story = Zgodba.objects.get(pk=story_id)
             except ObjectDoesNotExist:
                 return JsonResponse({'Message': f'Zgodba z {story_id} ne obstaja.'}, status=404)
+            if story.realizirana or story.sprint is not None:
+                return JsonResponse({'Message': 'Zgodbe ni mogoče spreminjati!'}, status=400)
             story_form = ZgodbaForm(request.POST, instance=story)
             if not story_form.is_valid():
                 return JsonResponse({'Message': story_form.errors}, status=400)
@@ -77,7 +79,10 @@ class StoriesApi(View):
             if not isinstance(t, tuple):
                 return t
             try:
-                Zgodba.objects.get(id=story_id).delete()
+                story = Zgodba.objects.get(id=story_id)
+                if story.realizirana or story.sprint is not None:
+                    return JsonResponse({'Message': 'Zgodbe ni mogoče izbrisati!'}, status=400)
+                story.delete()
                 return JsonResponse({'Message': 'Izbrisano'}, status=204)
             except ObjectDoesNotExist:
                 return JsonResponse({'Message': 'Zgodba ne obstaja.'}, status=404)
