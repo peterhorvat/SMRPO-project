@@ -127,7 +127,7 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="card-title">{{ post.naslov }}</h5>
-                                    <p class="card-text">Uporabnik: {{ post.uporabnik.username }}</p>
+                                    <p class="card-text">Uporabnik: {{ post.uporabnik.username }} | Ustvarjeno: {{ post.created_at|date:'d/m/Y H:i:s e'  }}</p>
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">{{ post.vsebina|linebreaks }}</p>
