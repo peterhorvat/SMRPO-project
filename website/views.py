@@ -317,43 +317,36 @@ def missing(request):
 
 @login_required
 @restrict_SM
-def create_new_sprint(request):
+def create_new_sprint(request, project_id):
     if request.method == 'POST':
         form = SprintForm(request.POST)
         if form.is_valid():
             instance = form.save(commit=False)
             instance.save()
-            return redirect('sprint_list')
+            return redirect('sprint_list', project_id)
     else:
         form = SprintForm()
     return render(request, 'sprint_form.html', {'form': form, 'create': True})
 
 
 @login_required
-def sprint_list(request, project_id=None):
+def sprint_list(request, project_id):
     cas_now = datetime.now().timestamp()
+    project = get_object_or_404(Projekt, id=project_id)
     try:
-        ScrumMaster.objects.get(uporabnik=request.user)
+        ScrumMaster.objects.get(projekt=project, uporabnik=request.user)
         isSM = True
     except ScrumMaster.DoesNotExist:
         isSM = False
-    if project_id:
-        sprinti = Sprint.objects.filter(projekt_id=project_id)
-    else:
-        sprinti = Sprint.objects.all()
-    projekti = Projekt.objects.all()
-    try:
-        izbran_projekt = Projekt.objects.get(id=project_id)
-    except Projekt.DoesNotExist:
-        izbran_projekt = None
-    return render(request, 'sprint_list.html', {'sprinti': sprinti, 'projekti': projekti,
-                                                'izbran_projekt': izbran_projekt, 'cas': cas_now,
+    sprinti = Sprint.objects.filter(projekt=project)
+    return render(request, 'sprint_list.html', {'sprinti': sprinti,
+                                                'izbran_projekt': project, 'cas': cas_now,
                                                 'isSM': isSM})
 
 
 @login_required
 @restrict_SM
-def edit_sprint(request, sprint_id):
+def edit_sprint(request, project_id, sprint_id):
     try:
         instance = get_object_or_404(Sprint, id=sprint_id)
         if instance.zacel():
@@ -362,7 +355,7 @@ def edit_sprint(request, sprint_id):
             form = EditSprintForm(request.POST or None, instance=instance)
             if form.is_valid():
                 form.save()
-                return redirect('sprint_list')
+                return redirect('sprint_list', project_id)
         else:
             form = EditSprintForm(request.POST or None, instance=instance)
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
@@ -371,13 +364,13 @@ def edit_sprint(request, sprint_id):
 
 @login_required
 @restrict_SM
-def delete_sprint(request, id):
-    instance = Sprint.objects.get(id=id)
+def delete_sprint(request, project_id, sprint_id):
+    instance = Sprint.objects.get(id=sprint_id)
     if instance.zacel():
         raise PermissionDenied
     else:
         instance.delete()
-    return redirect("sprint_list")
+    return redirect("sprint_list", project_id)
 
 
 def project_summary(request, project_id):

@@ -1,16 +1,16 @@
 from django.core.exceptions import PermissionDenied
 
-from website.models import ScrumMaster, ProjectOwner
+from website.models import ScrumMaster, ProjectOwner, Sprint
 
 
 def restrict_SM(function):
-    def wrap(request, *args, **kwargs):
+    def wrap(request, project_id, *args, **kwargs):
         # if request.user.is_superuser:
         #     return function(request, *args, **kwargs)
         try:
-            ScrumMaster.objects.get(uporabnik=request.user)
+            ScrumMaster.objects.get(projekt_id=project_id, uporabnik=request.user)
 
-            return function(request, *args, **kwargs)
+            return function(request, project_id, *args, **kwargs)
         except ScrumMaster.DoesNotExist:
             raise PermissionDenied
 

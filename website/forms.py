@@ -125,7 +125,7 @@ class EditSprintForm(ModelForm):
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
         if ("zacetni_cas" in self.changed_data or "koncni_cas" in self.changed_data) and \
-                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exists():
+                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exclude(id=self.instance.id).exists():
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
