@@ -99,17 +99,17 @@ class SprintForm(ModelForm):
         return cleaned_data
 
 
+# class EditSprintForm(ModelForm):
+#     class Meta:
+#         model = Sprint
+#         fields = ['ime', 'hitrost']
+#         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
+#         widgets = {
+#             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
+#         }
+
+
 class EditSprintForm(ModelForm):
-    class Meta:
-        model = Sprint
-        fields = ['ime', 'hitrost']
-        help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
-        widgets = {
-            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
-        }
-
-
-class EditSprintFormAdmin(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all(), disabled=True)
     class Meta:
         model = Sprint

@@ -367,8 +367,6 @@ def edit_sprint(request, sprint_id):
                 return redirect('sprint_list')
         else:
             form = EditSprintForm(request.POST or None, instance=instance)
-            if request.user.is_superuser:
-                form = EditSprintFormAdmin(request.POST or None, instance=instance)
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
     except Sprint.DoesNotExist:
         raise Http404
