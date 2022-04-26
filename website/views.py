@@ -402,9 +402,9 @@ def create_new_task(request, story_id):
             task = form.save(commit=False)
             task.zgodba = Zgodba.objects.get(id=story_id)
             if task.clan:
-                task.status = 0
+                task.status = Naloga.PENDING
             else:
-                task.status = -1
+                task.status = Naloga.NOT_ASSIGNED
             task.save()
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(status=204,
@@ -427,7 +427,7 @@ def accept_task(request, task_id):
     story = Zgodba.objects.get(id=task.zgodba_id)
     clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
     task.clan = clan
-    task.status = 1
+    task.status = Naloga.ACCEPTED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -443,7 +443,7 @@ def accept_task(request, task_id):
 def resign_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.clan = None
-    task.status = -1
+    task.status = Naloga.NOT_ASSIGNED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -458,7 +458,7 @@ def resign_task(request, task_id):
 @login_required
 def start_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
-    task.status = 0
+    task.status = Naloga.ACCEPTED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -473,7 +473,7 @@ def start_task(request, task_id):
 @login_required
 def finish_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
-    task.status = 2
+    task.status = Naloga.FINISHED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -493,9 +493,9 @@ def edit_task(request, pk):
         if form.is_valid():
             task = form.save(commit=False)
             if task.clan:
-                task.status = 0
+                task.status = Naloga.PENDING
             else:
-                task.status = -1
+                task.status = Naloga.NOT_ASSIGNED
             task.save()
 
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
