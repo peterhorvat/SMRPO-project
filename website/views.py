@@ -153,9 +153,9 @@ def sprint_backlog(request, project_id):
             story.canAddTask = False
         else:
             if story.sprint.zacetni_cas < timezone.now() < story.sprint.koncni_cas:
-                story.canAddTask=True
+                story.canAddTask = True
             else:
-                story.canAddTask=False
+                story.canAddTask = False
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:
@@ -185,9 +185,29 @@ def sprint_backlog(request, project_id):
 @login_required
 def edit_project(request, project_id):
     projekt = Projekt.objects.get(pk=project_id)
+    project_owner = ProjectOwner.objects.get(projekt=projekt)
+    scrum_master = ScrumMaster.objects.get(projekt=projekt)
+    exclude = {str(project_owner.uporabnik.id): str(project_owner.uporabnik.username), str(scrum_master.uporabnik.id): scrum_master.uporabnik.username}
+    clani = [i.uporabnik.id for i in Clan.objects.all().filter(projekt=project_id)]
+    to_delete = {str(i.uporabnik.id): i.uporabnik.username for i in Clan.objects.filter(projekt_id=project_id)}
+    available_members = {str(i.id): i.username for i in Uporabnik.objects.exclude(id__in=clani) if ProjectOwner.objects.filter(projekt_id=project_id).first().uporabnik.id != i.id}
+    print(available_members)
     if request.method == "GET":
+        uporabniki = {str(i["id"]): str(i["username"]) for i in map(lambda x: {"id": x.id, "username": x.username}, list(Uporabnik.objects.all()))}
+        clani_projekta = {str(i.uporabnik.id): i.uporabnik.username for i in Clan.objects.filter(projekt_id=project_id)}
+        vsi_sodelujoci = set()
+        for i in clani_projekta:
+            vsi_sodelujoci.add(int(i))
+        vsi_sodelujoci.add(int(project_owner.uporabnik.id))
+        vsi_sodelujoci.add(int(scrum_master.uporabnik.id))
+        vsi_sodelujoci = {int(i.id): i.username for i in Uporabnik.objects.filter(id__in=list(vsi_sodelujoci))}
         return render(request, "edit_project_page.html",
-                      {"projekt_ime": projekt.ime, "projekt_opis": projekt.opis, "form": CreateNewProjectForm()})
+                      {"projekt_ime": projekt.ime, "projekt_opis": projekt.opis, "id": project_id,
+                       "form": CreateNewProjectForm(), "uporabniki": json.dumps(uporabniki), "možni_uporabniki": available_members,
+                       "clani_projekta": vsi_sodelujoci,
+                       "trenutne_vodje": exclude,
+                       "izbris": to_delete
+                       })
     else:
         if request.POST["ime"] != projekt.ime:
             if len(Projekt.objects.filter(ime=request.POST["ime"])) == 0:
@@ -197,6 +217,86 @@ def edit_project(request, project_id):
         projekt.opis = request.POST["opis"]
         projekt.save()
         return redirect("/")
+
+
+def add_new_member(request, project_id):
+    if request.method == "POST":
+        if Clan.objects.filter(uporabnik_id=request.POST["id"], projekt_id=project_id):
+            return HttpResponse(status=400, content="Ta uporabnik je že prisoten na projektu.")
+        if ProjectOwner.objects.filter(uporabnik_id=request.POST["id"], projekt_id=project_id):
+            return HttpResponse(status=400, content="Uporabnik ne mora biti product owner in sodelovati v razvojni ekipi hkrati.")
+        new_member = Clan(projekt_id=project_id, uporabnik=Uporabnik.objects.get(pk=request.POST["id"]))
+        new_member.save()
+        return HttpResponse(status=200, content="Uporabnik je bil uspešno dodan.")
+
+
+def switch_roles(request, project_id):
+    who_to_switch = request.POST["switch1"].split("&")
+    with_whom_switch = int(request.POST["switch2"])
+    if who_to_switch[1] == '1':
+        current = ProjectOwner.objects.get(projekt_id=project_id)
+        new_owner = Uporabnik.objects.get(pk=with_whom_switch)
+        if current.uporabnik.id == new_owner.id:
+            return HttpResponse(status=200, content="Menjava uporabnika samega s sabo")
+        scrum_master = ScrumMaster.objects.filter(uporabnik=new_owner, projekt_id=project_id).first()
+        if scrum_master is not None:
+            scrum_master.uporabnik = current.uporabnik
+            clan = Clan.objects.filter(projekt_id=project_id, uporabnik=scrum_master.uporabnik)
+            if len(clan) > 0:
+                for i in Naloga.objects.filter(clan=Clan.objects.get(projekt_id=project_id, uporabnik=scrum_master.uporabnik)):
+                    i.status = Naloga.NOT_ASSIGNED
+            clan.delete()
+            current.uporabnik = new_owner
+            scrum_master.save()
+            current.save()
+            return HttpResponse(status=200, content="Uspešna menjava project ownerja in scrum masterja.")
+        else:
+            clan = Clan.objects.filter(projekt_id=project_id, uporabnik=new_owner)
+            if len(clan) > 0:
+                for i in Naloga.objects.filter(clan=Clan.objects.get(projekt_id=project_id, uporabnik=new_owner)):
+                    i.status = Naloga.NOT_ASSIGNED
+            clan.delete()
+            current.uporabnik = new_owner
+            current.save()
+            return HttpResponse(status=200, content="Uspešna menjava project ownerja in team memberja.")
+    if who_to_switch[1] == '2':
+        current = ScrumMaster.objects.get(projekt_id=project_id)
+        new_owner = Uporabnik.objects.get(pk=with_whom_switch)
+        if current.uporabnik.id == new_owner.id:
+            return HttpResponse(status=200, content="Menjava uporabnika samega s sabo")
+        clan = Clan.objects.filter(projekt_id=project_id, uporabnik=new_owner)
+        if len(clan) > 0:
+            for i in Naloga.objects.filter(clan=Clan.objects.get(projekt_id=project_id, uporabnik=current.uporabnik)):
+                i.status = Naloga.NOT_ASSIGNED
+            clan.uporabnik = current
+            current.uporabnik = new_owner
+            clan.save()
+            current.save()
+            return HttpResponse(status=200, content="Uspešna menjava scrum masterja in team memberja.")
+        else:
+            previous_owner = ProjectOwner.objects.get(projekt_id=project_id)
+            previous_owner.uporabnik = current.uporabnik
+            current.uporabnik = new_owner
+            previous_owner.save()
+            current.save()
+            return HttpResponse(status=200, content="Uspešna menjava scrum masterja in project ownerja.")
+    return HttpResponse(status=400, content="Te menjave ni mogoče izvest.")
+
+
+def delete_member(request, project_id, member_id):
+    if request.method == "POST":
+        if request.user.is_superuser or len(ScrumMaster.objects.get(pk=request.user.id, projekt_id=project_id)) > 0:
+            clan = Clan.objects.get(uporabnik_id=member_id, projekt_id=project_id)
+            for i in Naloga.objects.filter(clan=clan):
+                i.status = Naloga.NOT_ASSIGNED
+            clan.delete()
+            return HttpResponse(status=200)
+        else:
+            return HttpResponse(status=403, content="Nimate pravice za to akcijo.")
+
+
+def checkIfExists(users):
+    pass
 
 
 @login_required
@@ -249,6 +349,7 @@ def get_tasks_for_stories(stories):
         }
         r.append(story_dict)
     return r
+
 
 @login_required
 def product_backlog(request, project_id):
@@ -350,6 +451,7 @@ def edit_sprint(request, sprint_id):
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
     except Sprint.DoesNotExist:
         raise Http404
+
 
 @login_required
 @restrict_SM
@@ -466,6 +568,7 @@ def finish_task(request, task_id):
                             'HX-Redirect': url
                         })
 
+
 @login_required
 def edit_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
@@ -498,6 +601,7 @@ def edit_task(request, pk):
         'task': task,
     })
 
+
 @login_required
 def remove_task(request, pk):
     task = get_object_or_404(Naloga, pk=pk)
@@ -511,6 +615,7 @@ def remove_task(request, pk):
             }),
             'HX-Redirect': url
         })
+
 
 @login_required
 def tasks_list(request, story_id):

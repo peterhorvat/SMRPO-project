@@ -1,23 +1,82 @@
 {% extends "base.html" %}
 {% load crispy_forms_filters %}
 {% block content %}
-    <div class="d-flex" style="justify-content: center; flex-direction: column; width: 40%; padding: 10px;">
-        <form method="post" action="" id="editForm">
+    <div class="d-flex" style="flex-direction: row; justify-content: space-around">
+        <div class="d-flex" style="justify-content: center; flex-direction: column; width: 40%; padding: 10px;gap: 10px">
+            <form method="post" action="" id="editForm">
+                {% csrf_token %}
+                <fieldset>
+                    {{ form|crispy }}
+                </fieldset>
+                <button type="submit" style="margin-bottom: 10px" form="editForm" class="btn btn-success">Posodobi podatke</button>
+
+            </form>
+            <form method="post" action="/projects/{{ id }}/add_new_member/" id="addMember">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Dodaj novega člana preko uporabniškega imena</label>
+                    <div class="d-flex" style="flex-direction: row; justify-content: flex-start; gap: 10px">
+                        <input class="form-control w-80" type="text" id="addNewUser" name="name" onchange="setUserId(this)">
+                        <input class="form-control" id="newUserId" name="id" hidden value="">
+                        <button  class="btn btn-success" type="submit"><span><i class="fa fa-check"></i></span></button>
+                    </div>
+                </div>
+            </form>
+            <form action="/projects/{{ id }}/switch/" id="switchRoles" >
+                {% csrf_token %}
+                <label>Zamenjaj vloge</label>
+                <div class="d-flex" style="flex-direction: row; gap: 10px">
+                    <select class="form-select w-40"  name="switch1">
+                        {% for uporabnik,value in trenutne_vodje.items %}
+                            {% if forloop.counter0 == 0%}
+                                <option value="{{ uporabnik }}&1">{{ value }} (Product owner)</option>
+                            {% else %}
+                                <option value="{{ uporabnik }}&2">{{ value }} (Scrum master)</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                    <select class="form-select w-40"  name="switch2">
+                        {% for uporabnik,value in clani_projekta.items %}
+                            <option value="{{ uporabnik }}">{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                    <button  class="btn btn-success" type="submit"><span><i class="fa fa-check"></i></span></button>
+                </div>
+            </form>
+        </div>
+        <div class="d-flex" style="flex-direction: column; padding: 10px;" id="deleteUser">
+            <h3>Izbriši uporabnika</h3>
             {% csrf_token %}
-            <fieldset>
-                {{ form|crispy }}
-            </fieldset>
-        </form>
-        <button type="submit" form="editForm" class="btn btn-success">Posodobi podatke</button>
+            {% for uporabnik,value in izbris.items %}
+                <div class="d-flex" style="flex-direction: row; justify-content: space-between; gap: 10px; margin-bottom: 10px">
+                    <h5>{{value}}</h5>
+                    <button class="btn-danger btn" onclick="deleteUser('{{ id }}',{{ uporabnik }})"><span><i class="fas fa-times"></i></span></button>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
 {% block scripts %}
     <script>
         $(document).ready(function(){
             $("input[name='ime']")[0].value = "{{ projekt_ime }}";
-            $("textarea[name='opis']")[0].value = "{{ projekt_opis }}";
+            $("textarea[name='opis']")[0].value = "{{ projekt_opis}}";
         });
         var edit_form = $("#editForm");
+        var switch_form = $("#switchRoles");
+        var form = $("#addMember");
+
+        const možni_uporabniki = {{možni_uporabniki|safe}}
+        const uporabniki = {{uporabniki|safe}}
+        var userNames = []
+        for(let i in možni_uporabniki){
+          userNames.push(možni_uporabniki[i]);
+        }
+        $("#addNewUser").autocomplete({
+            source: userNames,
+            appendTo:  $(".d-flex")
+        })
+
         edit_form.on("submit", function (e) {
             e.preventDefault();
             $.ajax({
@@ -32,6 +91,49 @@
                 }
             });
         })
-
+        form.on("submit",function (event){
+            event.preventDefault();
+            $.ajax({
+                url: form.attr("action"),
+                type: "POST",
+                data: {
+                    "csrfmiddlewaretoken":document.getElementsByName("csrfmiddlewaretoken")[0].value,
+                    "id":document.getElementById("newUserId").value
+                },
+                success:function (data, status, xhr) {
+                    if(status === "success"){
+                        window.location.reload();
+                    }
+                }
+            });
+        });
+        switch_form.on("submit", function (event) {
+            event.preventDefault();
+            console.log($(this).serialize());
+            $.ajax({
+                url: switch_form.attr("action"),
+                type: "POST",
+                data:$(this).serialize(),
+                success: function (status,data,xhr){
+                    window.location.reload();
+                }
+            })
+        })
+        function deleteUser(project_id,user_id) {
+            $.ajax({
+                url: "/projects/"+project_id+"/"+user_id+"/delete/",
+                type: "POST",
+                data: {
+                    "csrfmiddlewaretoken":$("#deleteUser>input").val()
+                },
+                success:function (data, status, xhr){
+                    window.location.reload();
+                }
+            })
+        }
+        function setUserId(el){
+            let name = el.value;
+            $("#newUserId").val(Object.keys(uporabniki).find(key => uporabniki[key] === name));
+        }
     </script>
 {% endblock %}
