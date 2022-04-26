@@ -16,7 +16,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, EditSprintFormAdmin, NalogaForm, ZgodbaOpombeForm, ObjavaForm
+    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
 
 
@@ -149,15 +149,15 @@ def loginOTP(request):
 @login_required
 def sprint_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
-    stories = Zgodba.objects.filter(projekt=project)
+    curr_time = timezone.now()
+    try:
+        curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
+    except Sprint.DoesNotExist:
+        curr_sprint = None
+    stories = Zgodba.objects.filter(projekt=project, sprint=curr_sprint)
     for story in stories:
-        if story.sprint is None:
-            story.canAddTask = False
-        else:
-            if story.sprint.zacetni_cas < timezone.now() < story.sprint.koncni_cas:
-                story.canAddTask=True
-            else:
-                story.canAddTask=False
+        story.canAddTask = True
+
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:

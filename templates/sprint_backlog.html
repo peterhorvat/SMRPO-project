@@ -12,13 +12,6 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between mb-3">
             <h1>Projekt: {{ projekt.ime }}</h1>
-            {% if product_owner is not None or scrum_master is not None %}
-                <button class="btn pull-right btn-success text-right float-right " data-bs-toggle="modal"
-                        data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo"
-                        data-bs-Action="/api/projects/{{ projekt.id }}/stories/">
-                    <i class="fa fa-plus"></i> Dodaj zgodbo
-                </button>
-            {% endif %}
         </div>
 
         <div>
@@ -26,32 +19,12 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
                         <div class="row align-items-center">
-                            <div class="col-1">
-                                {% comment %} IF: PREVERI ALI SO VSI POGOJI IZPOLNJENI {% endcomment %}
-                                <input class="form-check-input" type="checkbox" value="" id={{ zgodba.id }}>
-                            </div>
                             <div class="col align-items-center">
                                 <h3 class="card-title text-center mb-0" style="margin-right: 5px">
                                     {{ zgodba.ime }}
                                 </h3>
                             </div>
                         </div>
-
-                        {% if product_owner is not None or scrum_master is not None %}
-                            <div class="d-flex">
-                                <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
-                                        data-bs-Ime="{{ zgodba.ime }}" data-bs-Vsebina="{{ zgodba.vsebina }}"
-                                        data-bs-SprejemniTesti="{{ zgodba.sprejemni_testi }}"
-                                        data-bs-Vrednost="{{ zgodba.poslovna_vrednost }}"
-                                        data-bs-Prioritety="{{ zgodba.get_prioriteta_display }}"
-                                        data-bs-Gumb="Posodobi zgodbo"
-                                        data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba.id }}/">
-                                    <span><i class="fas fa-edit" style="color: gray"></i></span>
-                                </button>
-                                <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba.id }})"><span><i
-                                        class="fas fa-times" style="color: red"></i></span></button>
-                            </div>
-                        {% endif %}
                     </div>
                     <div class="card-body">
                         <h5>Vsebina:</h5>
