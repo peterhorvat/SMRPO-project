@@ -4,32 +4,8 @@
     <div class="container mt-4">
         <h3>Seznam sprintov za izbrani projekt</h3>
         <div class="row mt-2 mb-2">
-{% comment %}            <div class="col-sm-12 col-md-4 col-lg-4 me-auto">
-                <label>Izberite projekt katerega sprinte želite videti</label>
-                <select class="form-select"
-                        aria-label="Izbirnik projektov"
-                        onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);"
-                >
-                    {% if izbran_projekt %}
-                        <option value="{% url 'sprint_list_id' izbran_projekt.id %}" selected>{{ izbran_projekt.ime }}</option>
-                        <option value="{% url 'sprint_list' %}">Vsi projekti</option>
-                    {% else %}
-                        <option value="{% url 'sprint_list' %}" selected>Vsi projekti</option>
-                    {% endif %}
-
-                    {% for projekt in projekti %}
-                        {% if izbran_projekt %}
-                            {% if projekt.id != izbran_projekt.id %}
-                                <option value="{% url 'sprint_list_id' projekt.id %}">{{ projekt.ime }}</option>
-                            {% endif %}
-                        {% else %}
-                            <option value="{% url 'sprint_list_id' projekt.id %}">{{ projekt.ime }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>{% endcomment %}
             <div class="col-sm-12 col-md-auto col-lg-auto align-self-end d-flex flex-row-reverse">
-                <a class="btn btn-success" href="{% url 'create_new_sprint' %}" role="button">Dodaj nov sprint</a>
+                {% if isSM %}<a class="btn btn-success" href="{% url 'create_new_sprint' izbran_projekt.id %}" role="button">Dodaj nov sprint</a>{% endif %}
             </div>
         </div>
 
@@ -56,8 +32,8 @@
                     <td class="align-middle">{{ sprint.zacetni_cas|date:'d.m.Y' }}</td>
                     <td class="align-middle">{{ sprint.koncni_cas|date:'d.m.Y' }}</td>
                     <td class="align-middle">{{ sprint.hitrost }}</td>
-                    <td class="align-middle"><a class="btn btn-primary" href="{% url 'edit_sprint' sprint.id %}" role="button"><i class="fas fa-edit"></i></a></td>
-                    <td class="align-middle"><a class="btn btn-danger" href="{% url 'delete_sprint' sprint.id %}" role="button"><i class="fas fa-trash-alt"></i></a></td>
+                    {% if isSM %}<td class="align-middle"><a class="btn btn-primary {% if sprint.zacel %} disabled {% endif %}" href="{% url 'edit_sprint' izbran_projekt.id sprint.id %}" role="button"><i class="fas fa-edit"></i></a></td>{% endif %}
+                    {% if isSM %}<td class="align-middle"><a class="btn btn-danger {% if sprint.zacel %} disabled {% endif %}" href="{% url 'delete_sprint' izbran_projekt.id sprint.id %}" role="button"><i class="fas fa-trash-alt"></i></a></td>{% endif %}
                 </tr>
             {% endfor %}
             </tbody>

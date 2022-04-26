@@ -12,10 +12,12 @@ from django.views.decorators.http import require_POST
 from rest_framework import status
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
+
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, EditSprintFormAdmin, NalogaForm
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga
+    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
 
 
 @login_required
@@ -147,7 +149,12 @@ def loginOTP(request):
 @login_required
 def sprint_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
-    stories = Zgodba.objects.filter(projekt=project)
+    curr_time = timezone.now()
+    try:
+        curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
+    except Sprint.DoesNotExist:
+        curr_sprint = None
+    stories = Zgodba.objects.filter(projekt=project, sprint=curr_sprint)
     for story in stories:
         if story.sprint is None:
             story.canAddTask = False
@@ -156,6 +163,7 @@ def sprint_backlog(request, project_id):
                 story.canAddTask = True
             else:
                 story.canAddTask = False
+        story.canAddTask = True
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:
@@ -178,7 +186,6 @@ def sprint_backlog(request, project_id):
         'product_owner': product_owner,
         'form': ZgodbaForm()
     }
-
     return render(request=request, template_name="sprint_backlog.html", context=context)
 
 
@@ -356,7 +363,8 @@ def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     context = {
         'projekt': project,
-        'form': ZgodbaForm
+        'story_form': ZgodbaForm,
+        'opombe_form': ZgodbaOpombeForm
     }
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
@@ -376,22 +384,46 @@ def product_backlog(request, project_id):
         redirect('/404')
 
     finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
-    context['finished_stories'] = finished_stories
-
     unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
 
     curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
-    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time)
+    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time).order_by('zacetni_cas')
     if len(past_sprints) > 0:
         past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
-        context['past_unfinished_stories'] = get_tasks_for_stories(past_unfinished_stories)
+        context['past_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in past_unfinished_stories
+        )
 
         rest_unfinished_stories = unfinished_stories.exclude(sprint__in=past_sprints)
         context['rest_unfinished_stories'] = ({'zgodba': story} for story in rest_unfinished_stories)
 
+        context['finished_stories'] = [
+            {
+                'sprint': sprint,
+                'zgodbe': [{'zgodba': story} for story in finished_stories.filter(sprint=sprint)]
+                if finished_stories.filter(sprint=sprint).count() != 0 else None
+            }
+            for sprint in past_sprints
+        ]
+    else:
+        context['rest_unfinished_stories'] = ({'zgodba': story} for story in unfinished_stories)
+
     try:
         curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
         context['current_sprint'] = curr_sprint
+        context['current_unfinished_stories'] = (
+            {
+                'zgodba': story,
+                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
+                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
+            }
+            for story in unfinished_stories.filter(sprint=curr_sprint)
+        )
     except Sprint.DoesNotExist:
         pass
 
@@ -404,50 +436,47 @@ def missing(request):
 
 @login_required
 @restrict_SM
-def create_new_sprint(request):
+def create_new_sprint(request, project_id):
     if request.method == 'POST':
         form = SprintForm(request.POST)
         if form.is_valid():
             instance = form.save(commit=False)
             instance.save()
-            return redirect('sprint_list')
+            return redirect('sprint_list', project_id)
     else:
         form = SprintForm()
     return render(request, 'sprint_form.html', {'form': form, 'create': True})
 
 
 @login_required
-def sprint_list(request, project_id=None):
+def sprint_list(request, project_id):
     cas_now = datetime.now().timestamp()
-    if project_id:
-        sprinti = Sprint.objects.filter(projekt_id=project_id)
-    else:
-        sprinti = Sprint.objects.all()
-    projekti = Projekt.objects.all()
+    project = get_object_or_404(Projekt, id=project_id)
     try:
-        izbran_projekt = Projekt.objects.get(id=project_id)
-    except Projekt.DoesNotExist:
-        izbran_projekt = None
-    return render(request, 'sprint_list.html', {'sprinti': sprinti, 'projekti': projekti,
-                                                'izbran_projekt': izbran_projekt, 'cas': cas_now})
+        ScrumMaster.objects.get(projekt=project, uporabnik=request.user)
+        isSM = True
+    except ScrumMaster.DoesNotExist:
+        isSM = False
+    sprinti = Sprint.objects.filter(projekt=project)
+    return render(request, 'sprint_list.html', {'sprinti': sprinti,
+                                                'izbran_projekt': project, 'cas': cas_now,
+                                                'isSM': isSM})
 
 
 @login_required
 @restrict_SM
-def edit_sprint(request, sprint_id):
+def edit_sprint(request, project_id, sprint_id):
     try:
         instance = get_object_or_404(Sprint, id=sprint_id)
+        if instance.zacel():
+            raise PermissionDenied
         if request.method == 'POST':
             form = EditSprintForm(request.POST or None, instance=instance)
-            if request.user.is_superuser:
-                form = EditSprintFormAdmin(request.POST or None, instance=instance)
             if form.is_valid():
                 form.save()
-                return redirect('sprint_list')
+                return redirect('sprint_list', project_id)
         else:
             form = EditSprintForm(request.POST or None, instance=instance)
-            if request.user.is_superuser:
-                form = EditSprintFormAdmin(request.POST or None, instance=instance)
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
     except Sprint.DoesNotExist:
         raise Http404
@@ -455,9 +484,13 @@ def edit_sprint(request, sprint_id):
 
 @login_required
 @restrict_SM
-def delete_sprint(request, id):
-    Sprint.objects.filter(id=id).delete()
-    return redirect("sprint_list")
+def delete_sprint(request, project_id, sprint_id):
+    instance = Sprint.objects.get(id=sprint_id)
+    if instance.zacel():
+        raise PermissionDenied
+    else:
+        instance.delete()
+    return redirect("sprint_list", project_id)
 
 
 def project_summary(request, project_id):
@@ -466,13 +499,16 @@ def project_summary(request, project_id):
     sprinti = Sprint.objects.filter(projekt=instance)
     scrum_master = ScrumMaster.objects.get(projekt=instance)
     project_owner = ProjectOwner.objects.get(projekt=instance)
+    project_posts = Objava.objects.filter(projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
                       'clani': clani,
                       'sprinti': sprinti,
                       'scrum_master': scrum_master,
-                      'project_owner': project_owner
+                      'project_owner': project_owner,
+                      'project_posts': project_posts,
+                      'post_form': ObjavaForm
                   })
 
 
@@ -486,9 +522,9 @@ def create_new_task(request, story_id):
             task = form.save(commit=False)
             task.zgodba = Zgodba.objects.get(id=story_id)
             if task.clan:
-                task.status = 0
+                task.status = Naloga.PENDING
             else:
-                task.status = -1
+                task.status = Naloga.NOT_ASSIGNED
             task.save()
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
             return HttpResponse(status=204,
@@ -511,7 +547,7 @@ def accept_task(request, task_id):
     story = Zgodba.objects.get(id=task.zgodba_id)
     clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
     task.clan = clan
-    task.status = 1
+    task.status = Naloga.ACCEPTED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -527,7 +563,7 @@ def accept_task(request, task_id):
 def resign_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.clan = None
-    task.status = -1
+    task.status = Naloga.NOT_ASSIGNED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -542,7 +578,7 @@ def resign_task(request, task_id):
 @login_required
 def start_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
-    task.status = 0
+    task.status = Naloga.ACCEPTED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -557,7 +593,7 @@ def start_task(request, task_id):
 @login_required
 def finish_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
-    task.status = 2
+    task.status = Naloga.FINISHED
     task.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
@@ -578,9 +614,9 @@ def edit_task(request, pk):
         if form.is_valid():
             task = form.save(commit=False)
             if task.clan:
-                task.status = 0
+                task.status = Naloga.PENDING
             else:
-                task.status = -1
+                task.status = Naloga.NOT_ASSIGNED
             task.save()
 
             url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"

@@ -4,7 +4,7 @@ import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
-from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan
+from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan, Objava
 
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
@@ -99,17 +99,17 @@ class SprintForm(ModelForm):
         return cleaned_data
 
 
+# class EditSprintForm(ModelForm):
+#     class Meta:
+#         model = Sprint
+#         fields = ['ime', 'hitrost']
+#         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
+#         widgets = {
+#             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
+#         }
+
+
 class EditSprintForm(ModelForm):
-    class Meta:
-        model = Sprint
-        fields = ['ime', 'hitrost']
-        help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
-        widgets = {
-            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
-        }
-
-
-class EditSprintFormAdmin(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all(), disabled=True)
     class Meta:
         model = Sprint
@@ -125,7 +125,7 @@ class EditSprintFormAdmin(ModelForm):
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
         if ("zacetni_cas" in self.changed_data or "koncni_cas" in self.changed_data) and \
-                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exists():
+                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exclude(id=self.instance.id).exists():
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
@@ -155,33 +155,27 @@ class NewUporabnikForm(ModelForm):
         }
 
 
-class NewUporabnikForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        # first call parent's constructor
-        super(ModelForm, self).__init__(*args, **kwargs)
-        # there's a `fields` property now
-        self.fields['password'].required = False
-
-    def clean_username(self):
-        ime = self.cleaned_data['username']
-        if Zgodba.objects.filter(ime=ime).count() > 0:
-            raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
-        return ime
-
-    class Meta:
-        model = Uporabnik
-        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'otp_auth']
-        widgets = {
-            'password': forms.PasswordInput(render_value=True),
-        }
-
-
 class NalogaForm(forms.ModelForm):
     class Meta:
         model = Naloga
         fields = ['ime', 'opis', 'cas', 'clan']
+        widgets = {
+            'cas': forms.NumberInput(attrs={'min': 0, 'type': 'number'})
+        }
 
     def __init__(self, *args, **kwargs):
         projekt_id = kwargs.pop('projekt_id', None)
         super(NalogaForm, self).__init__(*args, **kwargs)
         self.fields['clan'].queryset = Clan.objects.filter(projekt_id=projekt_id)
+
+
+class ZgodbaOpombeForm(forms.ModelForm):
+    class Meta:
+        model = Zgodba
+        fields = ['opombe']
+
+
+class ObjavaForm(forms.ModelForm):
+    class Meta:
+        model = Objava
+        fields = ['naslov', 'vsebina']

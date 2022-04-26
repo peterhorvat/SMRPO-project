@@ -113,6 +113,9 @@ class Sprint(models.Model):
         razlika = self.koncni_cas-datetime.now(pytz.timezone('Europe/Ljubljana'))
         return razlika.days < 2
 
+    def zacel(self):
+        return self.zacetni_cas.timestamp() < datetime.now().timestamp()
+
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"
 
@@ -136,7 +139,7 @@ class Zgodba(models.Model):
     poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                             verbose_name="Poslovna vrednost zgodbe")
     prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Prioriteta")
-    opombe = RichTextField(verbose_name="Opombe zgodbe")
+    opombe = RichTextField(blank=True, verbose_name="Opombe zgodbe", default="")
     realizirana = models.BooleanField(default=False, verbose_name="Realizirana zgodba")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -195,8 +198,10 @@ class Komentar(models.Model):
 
 
 class Objava(models.Model):
-    naslov = models.CharField(max_length=255, null=True, blank=True, verbose_name="Naslov objave")
-    clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
+    projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
+    naslov = models.CharField(max_length=255, verbose_name="Naslov objave")
+    uporabnik = models.ForeignKey(Uporabnik, on_delete=models.CASCADE, verbose_name="Uporabnik")
+    vsebina = RichTextField(verbose_name="Vsebina objave")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
