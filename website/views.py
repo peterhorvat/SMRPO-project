@@ -291,6 +291,8 @@ def product_backlog(request, project_id):
             }
             for sprint in past_sprints
         ]
+    else:
+        context['rest_unfinished_stories'] = ({'zgodba': story} for story in unfinished_stories)
 
     try:
         curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
