@@ -360,8 +360,6 @@ def edit_sprint(request, sprint_id):
             raise PermissionDenied
         if request.method == 'POST':
             form = EditSprintForm(request.POST or None, instance=instance)
-            if request.user.is_superuser:
-                form = EditSprintFormAdmin(request.POST or None, instance=instance)
             if form.is_valid():
                 form.save()
                 return redirect('sprint_list')
