@@ -330,6 +330,11 @@ def create_new_sprint(request):
 @login_required
 def sprint_list(request, project_id=None):
     cas_now = datetime.now().timestamp()
+    try:
+        ScrumMaster.objects.get(uporabnik=request.user)
+        isSM = True
+    except ScrumMaster.DoesNotExist:
+        isSM = False
     if project_id:
         sprinti = Sprint.objects.filter(projekt_id=project_id)
     else:
@@ -340,7 +345,8 @@ def sprint_list(request, project_id=None):
     except Projekt.DoesNotExist:
         izbran_projekt = None
     return render(request, 'sprint_list.html', {'sprinti': sprinti, 'projekti': projekti,
-                                                'izbran_projekt': izbran_projekt, 'cas': cas_now})
+                                                'izbran_projekt': izbran_projekt, 'cas': cas_now,
+                                                'isSM': isSM})
 
 
 @login_required
