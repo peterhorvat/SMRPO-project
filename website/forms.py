@@ -155,31 +155,13 @@ class NewUporabnikForm(ModelForm):
         }
 
 
-class NewUporabnikForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        # first call parent's constructor
-        super(ModelForm, self).__init__(*args, **kwargs)
-        # there's a `fields` property now
-        self.fields['password'].required = False
-
-    def clean_username(self):
-        ime = self.cleaned_data['username']
-        if Zgodba.objects.filter(ime=ime).count() > 0:
-            raise ValidationError("Uporanik s tem uporabniskim imenom že obstaja")
-        return ime
-
-    class Meta:
-        model = Uporabnik
-        fields = ['username', 'password', 'first_name', 'last_name', 'email', 'otp_auth']
-        widgets = {
-            'password': forms.PasswordInput(render_value=True),
-        }
-
-
 class NalogaForm(forms.ModelForm):
     class Meta:
         model = Naloga
         fields = ['ime', 'opis', 'cas', 'clan']
+        widgets = {
+            'cas': forms.NumberInput(attrs={'min': 0, 'type': 'number'})
+        }
 
     def __init__(self, *args, **kwargs):
         projekt_id = kwargs.pop('projekt_id', None)
@@ -191,6 +173,7 @@ class ZgodbaOpombeForm(forms.ModelForm):
     class Meta:
         model = Zgodba
         fields = ['opombe']
+
 
 class ObjavaForm(forms.ModelForm):
     class Meta:
