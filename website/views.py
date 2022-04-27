@@ -26,9 +26,9 @@ def landing_page(request):
         projekti = Projekt.objects.all()
     else:
         user = Uporabnik.objects.get(pk=request.user.id)
-        projekti = [i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
+        projekti = list(set([i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
                    + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
-                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]
+                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]))
 
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
