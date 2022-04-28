@@ -18,7 +18,7 @@ from rest_framework.exceptions import PermissionDenied
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar
 from itertools import filterfalse
 
 
@@ -535,6 +535,7 @@ def project_summary(request, project_id):
     scrum_master = ScrumMaster.objects.get(projekt=instance)
     project_owner = ProjectOwner.objects.get(projekt=instance)
     project_posts = Objava.objects.filter(projekt=instance)
+    komentarji = Komentar.objects.filter(clan__projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
@@ -543,7 +544,8 @@ def project_summary(request, project_id):
                       'scrum_master': scrum_master,
                       'project_owner': project_owner,
                       'project_posts': project_posts,
-                      'post_form': ObjavaForm
+                      'post_form': ObjavaForm,
+                      'komentarji': komentarji
                   })
 
 
