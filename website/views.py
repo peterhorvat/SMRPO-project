@@ -358,12 +358,18 @@ def get_tasks_for_stories(stories):
 
 @login_required
 def product_backlog(request, project_id):
+
     project = get_object_or_404(Projekt, pk=project_id)
     context = {
         'projekt': project,
         'story_form': ZgodbaForm,
         'opombe_form': ZgodbaOpombeForm
     }
+    if request.method == "POST":
+        print(request.POST)
+        zgodba  = Zgodba.objects.get(pk=int(request.POST["idZgodbe"]))
+        zgodba.ocena = int(request.POST["casovnaZahtevnost"])
+        zgodba.save()
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:
