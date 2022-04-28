@@ -8,7 +8,18 @@
         </div>
         {% if project_owner is not None or scrum_master is not None %}
             {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.sprint == None %}
-                <div class="d-flex">
+                <div class="d-flex" style="justify-content: space-evenly">
+                    <form class="d-flex"  style="flex-direction: row; text-align: center; align-items: center; justify-content: center" id="casovnaOcena">
+                        {% csrf_token %}
+                        {% if scrum_master %}
+                            <label for="casovnaZahtevnost">Ocena:</label>
+                            <input min="0" class="form-control" type="number" id="ocena" name="casovnaZahtevnost" placeholder="{{ zgodba_object.zgodba.ocena }}"
+                                   style="width: 20%" onchange="checkFib(this,{{ zgodba_object.zgodba.id }})"  data-toggle="tooltip" data-placement="top">
+                            <p class="d-flex" style="margin-bottom: 0">pt</p>
+                        {% else %}
+                            <label for="casovnaZahtevnost">Ocena: {{ zgodba.ocena }} pt</label>
+                        {% endif %}
+                    </form>
                     <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
                             data-bs-Ime="{{ zgodba_object.zgodba.ime }}"
                             data-bs-Vsebina="{{ zgodba_object.zgodba.vsebina }}"
@@ -19,6 +30,7 @@
                             data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/">
                         <span><i class="fas fa-edit" style="color: gray"></i></span>
                     </button>
+
                     <button class="btn" onclick="deleteStory({{ projekt.id }}, {{ zgodba_object.zgodba.id }})"><span><i
                             class="fas fa-times" style="color: red"></i></span></button>
                 </div>

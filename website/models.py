@@ -138,6 +138,7 @@ class Zgodba(models.Model):
     sprejemni_testi = RichTextField(verbose_name="Sprejemni testi zgodbe")
     poslovna_vrednost = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)],
                                             verbose_name="Poslovna vrednost zgodbe")
+    ocena = models.IntegerField(verbose_name="Časovna ocena", default=0)
     prioriteta = models.IntegerField(choices=PRIORITETE, verbose_name="Prioriteta")
     opombe = RichTextField(blank=True, verbose_name="Opombe zgodbe", default="")
     realizirana = models.BooleanField(default=False, verbose_name="Realizirana zgodba")

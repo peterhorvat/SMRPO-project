@@ -1,8 +1,9 @@
 {% for task in tasks %}
     <tr id="task-{{ task.pk }}" class="task-row">
+            <td class="col-sm-1">{{ task.pk }}</td>
         <td class="col-2">{{ task.ime }}</td>
         <td class="col-6">{{ task.opis }}</td>
-        <td class="col-sm-2">{{ task.cas }}</td>
+        <td class="col-sm-2">{{ task.cas }} h</td>
         {% if task.status == -1 %}
             <td class="col-sm-2">Nedodeljena</td>
             {% if canAccept %}
@@ -23,17 +24,15 @@
                 </td>
             {% endif %}
         {% elif task.status == 0 %}
-                            <td class="col-sm-2"> Na čakanju </td>
-
+            <td class="col-sm-2"> Na čakanju </td>
             {% if task.clan.uporabnik == request.user %}
             <td class="col-2">
                 <a hx-get="{% url 'resign_task' task.id %}" class="link-danger">Odstopi</a>
             </td>
                 <td class="col-2">
-                    <a hx-get="{% url 'start_task' task.id %}" class="link-success">Začni</a>
+                    <a hx-get="{% url 'accept_task' task.id %}" class="link-success">Sprejmi</a>
                 </td>
             {% else %}
-                <td class="col-sm-2"> Na čakanju </td>
                 <td class="col-2">
                     {{  task.clan.uporabnik.username }}
                 </td>
@@ -41,16 +40,19 @@
 
         {% elif task.status == 1 %}
             <td class="col-sm-2"> Dodeljena </td>
+
             <td class="col-2">
                     {{  task.clan.uporabnik.username }}
             </td>
+            {% if task.clan.uporabnik == request.user %}
+
              <td class="col-2">
                 <a class="link-succes">Beleži čas</a>
             </td>
-
             <td class="col-2">
                 <a hx-get="{% url 'resign_task' task.id %}" class="link-danger">Odstopi</a>
             </td>
+         {% endif %}
 
         {% elif task.status == 2 %}
             <td class="col-sm-2">Zaključena</td>

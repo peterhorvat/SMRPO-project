@@ -19,3 +19,4 @@ class MaxLengthPasswordValidator:
 
     def get_help_text(self):
         return "Geslo ne sme biti daljše od 128 znakov"
+
