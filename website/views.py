@@ -1,11 +1,12 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 
 import django_otp
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Sum
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
@@ -16,7 +17,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm
+    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
 from itertools import filterfalse
 
@@ -150,7 +151,7 @@ def loginOTP(request):
 @login_required
 def sprint_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
-    curr_time = timezone.now()
+    curr_time = date.today()
     # try:
     #    curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
     # except Sprint.DoesNotExist:
@@ -159,7 +160,7 @@ def sprint_backlog(request, project_id):
     sprint_backlog_stories = []
     for story in stories:
         if story.sprint:
-            if story.sprint.zacetni_cas < timezone.now() < story.sprint.koncni_cas:
+            if story.sprint.zacetni_cas < date.today() < story.sprint.koncni_cas:
                 sprint_backlog_stories.append(story)
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
@@ -367,7 +368,7 @@ def product_backlog(request, project_id):
     }
     if request.method == "POST":
         print(request.POST)
-        zgodba  = Zgodba.objects.get(pk=int(request.POST["idZgodbe"]))
+        zgodba = Zgodba.objects.get(pk=int(request.POST["idZgodbe"]))
         zgodba.ocena = int(request.POST["casovnaZahtevnost"])
         zgodba.save()
     try:
@@ -390,7 +391,7 @@ def product_backlog(request, project_id):
     finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
     unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
 
-    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
+    curr_time = date.today()
     past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time).order_by('zacetni_cas')
     if len(past_sprints) > 0:
         past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
@@ -428,6 +429,13 @@ def product_backlog(request, project_id):
             }
             for story in unfinished_stories.filter(sprint=curr_sprint)
         )
+        try:
+            vsota_ocen = Zgodba.objects.filter(sprint=curr_sprint).aggregate(sum=Sum('ocena'))['sum']
+            context['sum_zgodb'] = vsota_ocen
+            context['sum_zgodb_frac'] = (vsota_ocen / curr_sprint.hitrost)*100
+        except Exception:
+            context['sum_zgodb'] = 0
+            context['sum_zgodb_frac'] = 0.0
     except Sprint.DoesNotExist:
         pass
 
@@ -442,19 +450,20 @@ def missing(request):
 @restrict_SM
 def create_new_sprint(request, project_id):
     if request.method == 'POST':
-        form = SprintForm(request.POST)
+        form = SprintForm(request.POST, pid=project_id)
         if form.is_valid():
             instance = form.save(commit=False)
+            instance.projekt = Projekt.objects.get(id=project_id)
             instance.save()
             return redirect('sprint_list', project_id)
     else:
-        form = SprintForm()
+        form = SprintForm(pid=project_id)
     return render(request, 'sprint_form.html', {'form': form, 'create': True})
 
 
 @login_required
 def sprint_list(request, project_id):
-    cas_now = datetime.now().timestamp()
+    cas_now = date.today()
     project = get_object_or_404(Projekt, id=project_id)
     try:
         ScrumMaster.objects.get(projekt=project, uporabnik=request.user)
@@ -475,12 +484,18 @@ def edit_sprint(request, project_id, sprint_id):
         if instance.zacel():
             raise PermissionDenied
         if request.method == 'POST':
-            form = EditSprintForm(request.POST or None, instance=instance)
+            if instance.zacel():
+                form = EditSprintFormTekoci(request.POST or None, instance=instance)
+            else:
+                form = EditSprintForm(request.POST or None, instance=instance)
             if form.is_valid():
                 form.save()
                 return redirect('sprint_list', project_id)
         else:
-            form = EditSprintForm(request.POST or None, instance=instance)
+            if instance.zacel():
+                form = EditSprintFormTekoci(request.POST or None, instance=instance)
+            else:
+                form = EditSprintForm(request.POST or None, instance=instance)
         return render(request, 'sprint_form.html', {'form': form, 'sprint': instance, 'create': False})
     except Sprint.DoesNotExist:
         raise Http404
@@ -491,10 +506,25 @@ def edit_sprint(request, project_id, sprint_id):
 def delete_sprint(request, project_id, sprint_id):
     instance = Sprint.objects.get(id=sprint_id)
     if instance.zacel():
-        raise PermissionDenied
+        return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     else:
         instance.delete()
-    return redirect("sprint_list", project_id)
+        return HttpResponse(status=status.HTTP_200_OK)
+
+
+@login_required
+@restrict_SM
+def stories_to_sprint(request, project_id, sprint_id):
+    instance = Sprint.objects.get(id=sprint_id)
+    try:
+        if request.method == 'POST':
+            ids = request.POST["storyIds"]
+            for story in Zgodba.objects.filter(id__in=ids):
+                story.sprint = instance
+                story.save()
+        return HttpResponse(status=status.HTTP_200_OK)
+    except Exception:
+        return HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def project_summary(request, project_id):

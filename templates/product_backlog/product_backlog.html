@@ -4,7 +4,7 @@
 {% block content %}
     <div class="container mt-4">
         <div class="mt-4 mb-2 d-flex align-items-baseline" style="justify-content: space-between">
-            <h1>Projekt: {{ projekt.ime }}</h1>
+            <h1>#{{ projekt.id }} {{ projekt.ime }}</h1>
             {% if project_owner is not None or scrum_master is not None %}
                 <button class="btn pull-right btn-success text-right float-right justify-position-end" data-bs-toggle="modal"
                         data-bs-target="#addNewStory" data-bs-Gumb="Ustvari novo zgodbo"
@@ -32,7 +32,28 @@
                         {% endfor %}
                     {% endif %}
                     {% if current_sprint %}
-                        <h2>Trenutni sprint: {{ current_sprint.ime }}</h2>
+                        <div class="d-flex justify-content-between">
+                            <h4>Trenutni sprint: <span class="h3">#{{ current_sprint.id }} {{ current_sprint.ime }}</span></h4>
+                            {% if scrum_master is not None %}
+                                <button id="addStoriesToSprintBtn" class="btn btn-success mb-2"
+                                    {% if current_sprint.hitrost >= sum_zgodb %} disabled {% endif %}
+                                >Dodaj izbrane zgodbe</button>
+                            {% endif %}
+                        </div>
+                        {% if scrum_master is not None %}
+                            <div class="progress mb-2">
+                                <div
+                                    class="progress-bar progress-bar-striped {% if current_sprint.hitrost >= sum_zgodb %}bg-danger {% else %}bg-info{% endif %}"
+                                    role="progressbar"
+                                    style="width: {{ sum_zgodb_frac|stringformat:".1f" }}%"
+                                    aria-valuenow="{{ sum_zgodb }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="{{ current_sprint.hitrost }}">
+                                    {{ sum_zgodb }} / {{ current_sprint.hitrost }}
+                                </div>
+                            </div>
+                        {% endif %}
+
                         {% for zgodba_object in current_unfinished_stories %}
                             {% include 'product_backlog/story.html' %}
                             <br/>
@@ -44,7 +65,10 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-                    <h2>Nedodeljene zgodbe</h2>
+                    <div class="mt-4 mb-2">
+                        <h3>Nedodeljene zgodbe</h3>
+                    </div>
+
                     {% for zgodba_object in rest_unfinished_stories %}
                         {% include 'product_backlog/story.html' %}
                         <br/>
@@ -256,5 +280,42 @@
                 el.get(0).reportValidity();
             }
         }
+
+        $( "#addStoriesToSprintBtn" ).click(function() {
+            var checkedStories = $('.storyCheckbox:checkbox:checked').map(function() {
+                return parseInt(this.id.replace("check", ""));
+            }).get();
+            if(checkedStories.length < 1){
+                Swal.fire({
+                    title: `Izbrati morate vsaj eno zgodbo!`,
+                    icon: 'warning',
+                    showCloseButton: true,
+                    allowOutsideClick: true,
+                })
+            }
+            else{
+                if({{ sum_zgodb }} > {{ current_sprint.hitrost }}){
+                    Swal.fire({
+                        title: `Skupna ocena zgodb presega hitrost sprinta!`,
+                        icon: 'warning',
+                        showCloseButton: false,
+                        allowOutsideClick: true,
+                    })
+                }
+                else{
+                    $.ajax({
+                        type: "POST",
+                        url: "/stories_to_sprint/{{ projekt.id }}/{{ current_sprint.id }}/",
+                        data: {
+                            "storyIds": checkedStories.join(",")
+                        },
+                        success: () => {
+                            location.reload();
+                        }
+                    });
+                }
+            }
+
+        });
     </script>
 {% endblock %}

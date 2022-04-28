@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="container mt-4">
-        <h3>Seznam sprintov za izbrani projekt</h3>
+        <h4>Seznam sprintov za: <u class="h3">#{{ izbran_projekt.id }} {{ izbran_projekt.ime }}</u></h4>
         <div class="row mt-2 mb-2">
             <div class="col-sm-12 col-md-auto col-lg-auto align-self-end d-flex flex-row-reverse">
                 {% if isSM %}<a class="btn btn-success" href="{% url 'create_new_sprint' izbran_projekt.id %}" role="button">Dodaj nov sprint</a>{% endif %}
@@ -33,11 +33,50 @@
                     <td class="align-middle">{{ sprint.koncni_cas|date:'d.m.Y' }}</td>
                     <td class="align-middle">{{ sprint.hitrost }}</td>
                     {% if isSM %}<td class="align-middle"><a class="btn btn-primary {% if sprint.zacel %} disabled {% endif %}" href="{% url 'edit_sprint' izbran_projekt.id sprint.id %}" role="button"><i class="fas fa-edit"></i></a></td>{% endif %}
-                    {% if isSM %}<td class="align-middle"><a class="btn btn-danger {% if sprint.zacel %} disabled {% endif %}" href="{% url 'delete_sprint' izbran_projekt.id sprint.id %}" role="button"><i class="fas fa-trash-alt"></i></a></td>{% endif %}
+                    {% if isSM %}<td class="align-middle"><button id="{{ sprint.id }}" class="btn btn-danger del_sprint{% if sprint.zacel %} disabled {% endif %}"><i class="fas fa-trash-alt"></i></button></td>{% endif %}
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 
+    <script>
+        $(".del_sprint").click(function () {
+            const id = $(this).attr('id');
+            Swal.fire({
+                title: `Ste prepričani, da želite izbrisati izbrani sprint?`,
+                icon: 'question',
+                showCloseButton: true,
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading(),
+                showConfirmButton: true,
+                confirmButtonText: 'Da',
+                showCancelButton: true,
+                cancelButtonText: 'Prekliči',
+                preConfirm: () => {
+                    return fetch(`/projects/1/delete_sprint/${id}`)
+                    .then(response => {
+                        if (response.status !== 200) {
+                            throw new Error("Prišlo je do napake")
+                        }
+                        Swal.fire({
+                            title: `Sprint je bil uspešno izbrisan.`,
+                            icon: 'success',
+                            showCloseButton: true,
+                            allowOutsideClick: true,
+                            showConfirmButton: false,
+                            didDestroy: () => {
+                                location.reload();
+                            }
+                        })
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage(
+                            `Ups, prišlo je do napake!`
+                        )
+                    })
+                }
+            })
+        });
+    </script>
 {% endblock %}

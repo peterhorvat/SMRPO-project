@@ -1,17 +1,15 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import pytz
 from django import forms
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
+from django.db.models import Sum
+
 from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan, Objava
 
-from django.forms import ModelForm
+from django.forms import ModelForm, DateInput
 from django.core.exceptions import ValidationError
-
-
-class DateTimeInput(forms.DateTimeInput):
-    input_type = 'datetime-local'
 
 
 class UserLoginForm(AuthenticationForm):
@@ -73,50 +71,79 @@ class ZgodbaForm(ModelForm):
 
 
 class SprintForm(ModelForm):
-    projekt = forms.ModelChoiceField(queryset=Projekt.objects.all())
+    def __init__(self, *args, **kwargs):
+        self._pid = kwargs.pop('pid', None)
+        super().__init__(*args, **kwargs)
 
     class Meta:
         model = Sprint
-        fields = ['ime', 'projekt', 'zacetni_cas', 'koncni_cas', 'hitrost']
+        fields = ['ime', 'zacetni_cas', 'koncni_cas', 'hitrost']
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
-            'zacetni_cas': DateTimeInput(format=""),
-            'koncni_cas': DateTimeInput(),
+            'zacetni_cas': forms.DateInput(
+                format='%d.%m.%Y',
+                attrs={'placeholder': 'Izberite datum',
+                       'type': 'date'
+                       }),
+            'koncni_cas': forms.DateInput(
+                format='%d.%m.%Y',
+                attrs={'placeholder': 'Izberite datum',
+                       'type': 'date'
+                       }),
         }
 
     def clean(self):
         cleaned_data = self.cleaned_data
         zacetni_cas = cleaned_data.get("zacetni_cas")
         koncni_cas = cleaned_data.get("koncni_cas")
-        projekt = cleaned_data.get("projekt")
+        projekt = Projekt.objects.get(id=self._pid)
         if Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exists():
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
-        if zacetni_cas.timestamp() < datetime.now(pytz.timezone('Europe/Ljubljana')).timestamp():
+        if zacetni_cas < date.today():
             raise forms.ValidationError("Začetni čas ne sme biti v preteklosti!")
         return cleaned_data
 
 
-# class EditSprintForm(ModelForm):
-#     class Meta:
-#         model = Sprint
-#         fields = ['ime', 'hitrost']
-#         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
-#         widgets = {
-#             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'})
-#         }
+class EditSprintFormTekoci(ModelForm):
+    class Meta:
+        model = Sprint
+        fields = ['hitrost']
+        help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
+        widgets = {
+            'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
+        }
+
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        hitrost = cleaned_data.get("hitrost")
+        sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(sum=Sum('ocena'))['sum']
+        if int(hitrost) < int(sum_tock):
+            raise forms.ValidationError("Hitrost ne sme biti nižja od skupnega števila točk zgodb!")
+        return cleaned_data
 
 
 class EditSprintForm(ModelForm):
     projekt = forms.ModelChoiceField(queryset=Projekt.objects.all(), disabled=True)
+
     class Meta:
         model = Sprint
         fields = ['projekt', 'ime', 'hitrost', 'zacetni_cas', 'koncni_cas']
         help_texts = {'hitrost': 'Vnesite pozitivno celo število.'}
         widgets = {
             'hitrost': forms.NumberInput(attrs={'min': 1, 'type': 'number'}),
+            'zacetni_cas': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'placeholder': 'Izberite datum',
+                       'type': 'date'
+                       }),
+            'koncni_cas': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'placeholder': 'Izberite datum',
+                       'type': 'date'
+                       }),
         }
 
     def clean(self):
@@ -124,12 +151,17 @@ class EditSprintForm(ModelForm):
         zacetni_cas = cleaned_data.get("zacetni_cas")
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
+        hitrost = cleaned_data.get("hitrost")
+        sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(sum=Sum('ocena'))['sum']
+        if int(hitrost) < int(sum_tock):
+            raise forms.ValidationError("Hitrost ne sme biti nižja od skupnega števila točk zgodb!")
         if ("zacetni_cas" in self.changed_data or "koncni_cas" in self.changed_data) and \
-                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exclude(id=self.instance.id).exists():
+                Sprint.objects.filter(projekt=projekt, zacetni_cas__lt=koncni_cas, koncni_cas__gt=zacetni_cas).exclude(
+                    id=self.instance.id).exists():
             raise forms.ValidationError("Sprint v tem obdobju že obstaja.")
         if zacetni_cas > koncni_cas:
             raise forms.ValidationError("Končni čas ne sme biti pred začetnim časom!")
-        if zacetni_cas.timestamp() < datetime.now(pytz.timezone('Europe/Ljubljana')).timestamp():
+        if zacetni_cas < date.today():
             raise forms.ValidationError("Začetni čas ne sme biti v preteklosti!")
         return cleaned_data
 

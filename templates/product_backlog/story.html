@@ -1,10 +1,24 @@
 <div class="card">
     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
-        <div>
-            <h4 class="card-title" style="margin-right: 5px">{{ zgodba_object.zgodba.ime }}</h4>
-            {% if zgodba_object.zgodba.sprint %}
-                <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
+        <div class="row align-items-center">
+            {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.ocena > 0 and not zgodba_object.zgodba.sprint and scrum_master is not None %}
+                <div class="col-1">
+                    {% comment %} IF: PREVERI ALI SO VSI POGOJI IZPOLNJENI {% endcomment %}
+                    <input
+                        class="form-check-input storyCheckbox"
+                        type="checkbox" value=""
+                        id=check{{ zgodba_object.zgodba.id }}
+                    >
+                </div>
             {% endif %}
+            <div class="col align-items-center">
+                <h4 class="card-title text-center mb-0" style="margin-right: 5px">
+                    {{ zgodba_object.zgodba.ime }}
+                    {% if zgodba_object.zgodba.sprint %}
+                        <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
+                    {% endif %}
+                </h4>
+            </div>
         </div>
         {% if project_owner is not None or scrum_master is not None %}
             {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.sprint == None %}

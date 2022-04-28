@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import pytz
 from django.contrib.auth.models import AbstractUser
@@ -96,8 +96,8 @@ class ProjectOwner(models.Model):
 class Sprint(models.Model):
     ime = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ime sprinta")
     projekt = models.ForeignKey(Projekt, on_delete=models.CASCADE, verbose_name="Projekt")
-    zacetni_cas = models.DateTimeField(verbose_name="Začetni čas sprinta")
-    koncni_cas = models.DateTimeField(verbose_name="Končni čas sprinta")
+    zacetni_cas = models.DateField(verbose_name="Začetni čas sprinta")
+    koncni_cas = models.DateField(verbose_name="Končni čas sprinta")
     hitrost = models.IntegerField(verbose_name="Predvidena hitrost sprinta")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -107,14 +107,14 @@ class Sprint(models.Model):
         verbose_name = "Sprint"
 
     def pretekel(self):
-        return self.koncni_cas.timestamp() < datetime.now().timestamp()
+        return self.koncni_cas < date.today()
 
     def bo_pretekel(self):
-        razlika = self.koncni_cas-datetime.now(pytz.timezone('Europe/Ljubljana'))
+        razlika = self.koncni_cas - date.today()
         return razlika.days < 2
 
     def zacel(self):
-        return self.zacetni_cas.timestamp() < datetime.now().timestamp()
+        return self.zacetni_cas < date.today()
 
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"
