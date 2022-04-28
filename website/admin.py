@@ -82,7 +82,7 @@ class DokumentacijaAdmin(admin.ModelAdmin):
 
 class BelezenjeCasaAdmin(admin.ModelAdmin):
     search_fields = ('clan',)
-    list_display = ['clan', 'zacetek', 'konec', 'presoja']
+    list_display = ['clan', 'zacetek', 'ure', 'presoja']
     # list_filter = []
 
 

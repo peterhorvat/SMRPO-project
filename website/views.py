@@ -18,7 +18,7 @@ from rest_framework.exceptions import PermissionDenied
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, BelezenjeCasa
 from itertools import filterfalse
 
 
@@ -29,8 +29,8 @@ def landing_page(request):
     else:
         user = Uporabnik.objects.get(pk=request.user.id)
         projekti = list(set([i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
-                   + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
-                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]))
+                            + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
+                            + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]))
 
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
@@ -359,7 +359,6 @@ def get_tasks_for_stories(stories):
 
 @login_required
 def product_backlog(request, project_id):
-
     project = get_object_or_404(Projekt, pk=project_id)
     context = {
         'projekt': project,
@@ -432,7 +431,7 @@ def product_backlog(request, project_id):
         try:
             vsota_ocen = Zgodba.objects.filter(sprint=curr_sprint).aggregate(Sum('ocena'))["ocena__sum"]
             context['sum_zgodb'] = vsota_ocen
-            context['sum_zgodb_frac'] = (vsota_ocen / curr_sprint.hitrost)*100
+            context['sum_zgodb_frac'] = (vsota_ocen / curr_sprint.hitrost) * 100
         except Exception:
             context['sum_zgodb'] = 0
             context['sum_zgodb_frac'] = 0.0
@@ -586,6 +585,12 @@ def accept_task(request, task_id):
     task.clan = clan
     task.status = Naloga.ACCEPTED
     task.save()
+    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
+    if belezenje_casa is None:
+        BelezenjeCasa(clan=clan, naloga=task, zgodba=story, sprint=story.sprint, zacetek=datetime.now()).save()
+    else:
+        belezenje_casa.start = datetime.now()
+        belezenje_casa.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
@@ -613,25 +618,19 @@ def resign_task(request, task_id):
 
 
 @login_required
-def start_task(request, task_id):
-    task = Naloga.objects.get(id=task_id)
-    task.status = Naloga.ACCEPTED
-    task.save()
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
-    return HttpResponse(status=204,
-                        headers={
-                            'HX-Trigger': json.dumps({
-                                "taskStarted": None,
-                            }),
-                            'HX-Redirect': url
-                        })
-
-
-@login_required
 def finish_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.status = Naloga.FINISHED
     task.save()
+    story = Zgodba.objects.get(id=task.zgodba_id)
+    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
+    if datetime.now().date() is belezenje_casa.start.date():
+        belezenje_casa.ure += datetime.now().hour - belezenje_casa.start.hour
+    else:
+        BelezenjeCasa(clan=clan, naloga=task, zgodba=story, sprint=story.sprint, zacetek=datetime.now()).save()
+    belezenje_casa.konec = datetime.now()
+    belezenje_casa.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
