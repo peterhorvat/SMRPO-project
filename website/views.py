@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 import django_otp
@@ -18,6 +18,7 @@ from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava
+from itertools import filterfalse
 
 
 @login_required
@@ -26,9 +27,9 @@ def landing_page(request):
         projekti = Projekt.objects.all()
     else:
         user = Uporabnik.objects.get(pk=request.user.id)
-        projekti = [i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
+        projekti = list(set([i.projekt for i in Clan.objects.filter(uporabnik=user).iterator()] \
                    + [i.projekt for i in ScrumMaster.objects.filter(uporabnik=user).iterator()] \
-                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]
+                   + [i.projekt for i in ProjectOwner.objects.filter(uporabnik=user).iterator()]))
 
     uporabniki = Uporabnik.objects.all()
     return render(request, 'landing_page.html', context={"projekti": projekti, "uporabniki": uporabniki, "forms": {
@@ -150,20 +151,16 @@ def loginOTP(request):
 def sprint_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
     curr_time = timezone.now()
-    try:
-        curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
-    except Sprint.DoesNotExist:
-        curr_sprint = None
-    stories = Zgodba.objects.filter(projekt=project, sprint=curr_sprint)
+    # try:
+    #    curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
+    # except Sprint.DoesNotExist:
+    #    curr_sprint = None
+    stories = Zgodba.objects.filter(projekt=project)
+    sprint_backlog_stories = []
     for story in stories:
-        if story.sprint is None:
-            story.canAddTask = False
-        else:
+        if story.sprint:
             if story.sprint.zacetni_cas < timezone.now() < story.sprint.koncni_cas:
-                story.canAddTask = True
-            else:
-                story.canAddTask = False
-        story.canAddTask = True
+                sprint_backlog_stories.append(story)
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:
@@ -178,9 +175,10 @@ def sprint_backlog(request, project_id):
         product_owner = None
     if clan is None and product_owner is None and scrum_master is None:
         redirect('/404')
+
     context = {
         'projekt': project,
-        'zgodbe': stories,
+        'zgodbe': sprint_backlog_stories,
         'clan': clan,
         'scrum_master': scrum_master,
         'product_owner': product_owner,
@@ -670,7 +668,7 @@ def tasks_list(request, story_id):
     if not canEdit:
         try:
             canEdit = True
-            canAccept = True
+            canAccept = False
             canCreate = True
             ScrumMaster.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
         except ScrumMaster.DoesNotExist:

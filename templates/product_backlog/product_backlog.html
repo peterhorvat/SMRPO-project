@@ -32,7 +32,7 @@
                         {% endfor %}
                     {% endif %}
                     {% if current_sprint %}
-                        <h2>Trenutni sprint</h2>
+                        <h2>Trenutni sprint: {{ current_sprint.ime }}</h2>
                         {% for zgodba_object in current_unfinished_stories %}
                             {% include 'product_backlog/story.html' %}
                             <br/>
