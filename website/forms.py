@@ -119,7 +119,10 @@ class EditSprintFormTekoci(ModelForm):
     def clean(self):
         cleaned_data = self.cleaned_data
         hitrost = cleaned_data.get("hitrost")
-        sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(sum=Sum('ocena'))['sum']
+        if Zgodba.objects.filter(sprint_id=self.instance.id).exists():
+            sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(Sum('ocena'))["ocena__sum"]
+        else:
+            sum_tock = 0
         if int(hitrost) < int(sum_tock):
             raise forms.ValidationError("Hitrost ne sme biti nižja od skupnega števila točk zgodb!")
         return cleaned_data
@@ -152,7 +155,10 @@ class EditSprintForm(ModelForm):
         koncni_cas = cleaned_data.get("koncni_cas")
         projekt = cleaned_data.get("projekt")
         hitrost = cleaned_data.get("hitrost")
-        sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(sum=Sum('ocena'))['sum']
+        if Zgodba.objects.filter(sprint_id=self.instance.id).exists():
+            sum_tock = Zgodba.objects.filter(sprint_id=self.instance.id).aggregate(Sum('ocena'))["ocena__sum"]
+        else:
+            sum_tock = 0
         if int(hitrost) < int(sum_tock):
             raise forms.ValidationError("Hitrost ne sme biti nižja od skupnega števila točk zgodb!")
         if ("zacetni_cas" in self.changed_data or "koncni_cas" in self.changed_data) and \
