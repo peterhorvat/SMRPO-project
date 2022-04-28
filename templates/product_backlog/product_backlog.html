@@ -24,8 +24,9 @@
         <div id="pills-tabContent" class="tab-content mt-4 mb-2">
             <div id="pills-unfinished" class="tab-pane fade show active" role="tabpanel" aria-labelledby="pills-unfinished-tab">
                 <div class="mb-4">
+                    <h2>Dodeljene zgodbe</h2>
                     {% if past_unfinished_stories|length > 0 %}
-                        <h2>Pretekli sprinti</h2>
+                        <h3>Pretekli sprinti</h3>
                         {% for zgodba_object in past_unfinished_stories %}
                             {% include 'product_backlog/story.html' %}
                             <br/>
@@ -33,7 +34,7 @@
                     {% endif %}
                     {% if current_sprint %}
                         <div class="d-flex justify-content-between">
-                            <h4>Trenutni sprint: <span class="h3">#{{ current_sprint.id }} {{ current_sprint.ime }}</span></h4>
+                            <h3>Trenutni sprint: <span class="h3">{{ current_sprint.ime }}</span></h3>
                             {% if scrum_master is not None %}
                                 <button id="addStoriesToSprintBtn" class="btn btn-success mb-2"
                                     {% if sum_zgodb >= current_sprint.hitrost %} disabled {% endif %}
@@ -53,7 +54,6 @@
                                 </div>
                             </div>
                         {% endif %}
-
                         {% for zgodba_object in current_unfinished_stories %}
                             {% include 'product_backlog/story.html' %}
                             <br/>
@@ -65,13 +65,33 @@
                             </div>
                         {% endfor %}
                     {% endif %}
-                    <div class="mt-4 mb-2">
-                        <h3>Nedodeljene zgodbe</h3>
-                    </div>
 
+                    <hr/>
+
+                    <h2>Nedodeljene zgodbe</h2>
                     {% for zgodba_object in rest_unfinished_stories %}
                         {% include 'product_backlog/story.html' %}
                         <br/>
+                    {% empty %}
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="card-text">Ni nedodeljenih zgodb.</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    <hr/>
+
+                    <h2>Zgodbe v prihodnjih sprintih</h2>
+                    {% for zgodba_object in future_unfinished_stories %}
+                        {% include 'product_backlog/story.html' %}
+                        <br/>
+                    {% empty %}
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="card-text">Ni zgodb v prihodnjih sprintih.</p>
+                            </div>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
@@ -145,7 +165,7 @@
 
         var modalStory = document.getElementById("addNewStory");
         modalStory.addEventListener("show.bs.modal", fillForm);
-        var formStory = $("form")[0];
+        var formStory = document.getElementById("createNewStoryForm");
         formStory.addEventListener("submit", function (event) {
             event.preventDefault();
             $.post(formStory.action, $(this).serialize())
@@ -231,7 +251,7 @@
         function confirmStory(project_id, story_id) {
              if (confirm("Želite potrditi zgodbo?")) {
                  $.ajax({
-                     url: "/api/projects/" + project_id + "/stories/" + story_id + "/confirm",
+                     url: "/api/projects/" + project_id + "/stories/" + story_id + "/confirm/",
                      type: "POST",
                      success: function (data) {
                          location.reload();

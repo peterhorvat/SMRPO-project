@@ -74,30 +74,6 @@
                 <br/>
             {% endfor %}
             <br/>
-            <div class="modal fade" tabindex="-1" id="addNewStory" aria-labelledby="addNewStory" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Ustvari novo zgodbo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" class="form-group" id="createNewStoryForm" action="">
-                                {% csrf_token %}
-                                <fieldset class="form-group">
-                                    {{ form|crispy }}
-                                    <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena
-                                        polja so obvezna.</i></p>
-                                </fieldset>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
-                            <button type="submit" form="createNewStoryForm" class="btn btn-success"></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
     </div>
@@ -140,67 +116,5 @@
                 }
             })
         });
-
-        var modal = document.getElementById("addNewStory");
-        modal.addEventListener("show.bs.modal", fillForm);
-        var form = $("form")[0];
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            $.post(form.action, $(this).serialize())
-                .done(function () {
-                    location.reload();
-                })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR);
-                    if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
-                        alert(jqXHR.responseJSON.Message);
-                    } else {
-                        alert(errorThrown);
-                    }
-                });
-
-        });
-
-        function deleteStory(project_id, story_id) {
-            if (confirm("Želite izbrisati zgodbo ?")) {
-                $.ajax({
-                    url: "/api/projects/" + project_id + "/stories/" + story_id + "/",
-                    type: "DELETE",
-                    success: function (data) {
-                        location.reload();
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
-                            alert(jqXHR.responseJSON.Message);
-                        } else {
-                            alert(errorThrown);
-                        }
-                    }
-                })
-            }
-        }
-
-        function fillForm(event) {
-            var button = event.relatedTarget;
-            var modal = document.getElementById("addNewStory");
-            var values = [button.getAttribute("data-bs-Ime"),
-                button.getAttribute("data-bs-Vsebina"),
-                button.getAttribute("data-bs-SprejemniTesti"),
-                button.getAttribute("data-bs-Vrednost"),
-                button.getAttribute("data-bs-Prioritety")]
-            var modalBodyInput = modal.querySelectorAll('fieldset  input, fieldset  textarea');
-            console.log(modalBodyInput);
-            modalBodyInput[0].value = values[0];
-            modalBodyInput[1].value = values[1];
-            modalBodyInput[2].value = values[2];
-            modalBodyInput[3].value = parseInt(values[3]);
-            $("select option").filter(function () {
-                //may want to use $.trim in here
-                return $(this).text() === values[4];
-            }).prop('selected', true);
-            $("button[type='submit']")[0].innerText = button.getAttribute("data-bs-Gumb");
-            form.action = button.getAttribute("data-bs-Action");
-        }
-
     </script>
 {% endblock %}

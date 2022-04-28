@@ -18,7 +18,8 @@ from rest_framework.exceptions import PermissionDenied
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci, KomentarForm
-from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, BelezenjeCasa
+from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, \
+    BelezenjeCasa, PastSprints
 from itertools import filterfalse
 
 
@@ -160,7 +161,7 @@ def sprint_backlog(request, project_id):
     sprint_backlog_stories = []
     for story in stories:
         if story.sprint:
-            if story.sprint.zacetni_cas < date.today() < story.sprint.koncni_cas:
+            if story.sprint.zacetni_cas <= date.today() <= story.sprint.koncni_cas:
                 sprint_backlog_stories.append(story)
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
@@ -357,6 +358,48 @@ def get_tasks_for_stories(stories):
     return r
 
 
+def get_story_objects(stories, check_tasks=True):
+    r = []
+    for story in stories:
+        story_object = {'zgodba': story}
+        if check_tasks:
+            story_object['naloge_dokoncane'] =  Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count()
+            story_object['naloge_vse'] = Naloga.objects.filter(zgodba=story).count()
+        story_object['work_done'] = get_work_for_story(story)
+        r.append(story_object)
+    return r
+
+
+def get_work_for_story(story):
+    work = [get_work_for_story_sprint(story, story.sprint)]
+    past_sprints = PastSprints.objects.filter(zgodba=story)
+    for past_sprint in past_sprints:
+        work.append(get_work_for_story_sprint(story, past_sprint.sprint))
+    return list(filter(lambda w: w is not None, work))
+
+
+def get_work_for_story_sprint(story, sprint):
+    if sprint is None:
+        return None
+    story_tasks = Naloga.objects.filter(zgodba=story)
+    vsota_ur = BelezenjeCasa.objects.filter(naloga__in=story_tasks, sprint=sprint).aggregate(Sum('ure'))['ure__sum']
+    return {
+        'sprint': sprint,
+        'work': vsota_ur
+    }
+
+
+def get_sprint_story_objects(sprints, stories):
+    r = []
+    for sprint in sprints:
+        sprint_object = {'sprint': sprint}
+        stories_in_sprint = stories.filter(sprint=sprint)
+        if stories_in_sprint.count() > 0:
+            sprint_object['zgodbe'] = get_story_objects(stories_in_sprint)
+        r.append(sprint_object)
+    return r
+
+
 @login_required
 def product_backlog(request, project_id):
     project = get_object_or_404(Projekt, pk=project_id)
@@ -390,44 +433,24 @@ def product_backlog(request, project_id):
     finished_stories = Zgodba.objects.filter(projekt=project, realizirana=True)
     unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
 
-    curr_time = date.today()
-    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lte=curr_time).order_by('zacetni_cas')
-    if len(past_sprints) > 0:
-        past_unfinished_stories = unfinished_stories.filter(sprint__in=past_sprints)
-        context['past_unfinished_stories'] = (
-            {
-                'zgodba': story,
-                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
-                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
-            }
-            for story in past_unfinished_stories
-        )
+    curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
+    past_sprints = Sprint.objects.filter(projekt=project, koncni_cas__lte=curr_time).order_by('zacetni_cas')
+    future_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__gte=curr_time).order_by('zacetni_cas')
 
-        rest_unfinished_stories = unfinished_stories.exclude(sprint__in=past_sprints)
-        context['rest_unfinished_stories'] = ({'zgodba': story} for story in rest_unfinished_stories)
+    context['past_unfinished_stories'] = get_story_objects(unfinished_stories.filter(sprint__in=past_sprints))
+    context['future_unfinished_stories'] = get_story_objects(
+        unfinished_stories.filter(sprint__in=future_sprints), check_tasks=False)
+    context['rest_unfinished_stories'] = get_story_objects(
+        unfinished_stories.exclude(sprint__isnull=False), check_tasks=False)
 
-        context['finished_stories'] = [
-            {
-                'sprint': sprint,
-                'zgodbe': [{'zgodba': story} for story in finished_stories.filter(sprint=sprint)]
-                if finished_stories.filter(sprint=sprint).count() != 0 else None
-            }
-            for sprint in past_sprints
-        ]
-    else:
-        context['rest_unfinished_stories'] = ({'zgodba': story} for story in unfinished_stories)
+    context['finished_stories'] = get_sprint_story_objects(past_sprints, finished_stories)
 
     try:
         curr_sprint = Sprint.objects.get(projekt=project, zacetni_cas__lte=curr_time, koncni_cas__gte=curr_time)
         context['current_sprint'] = curr_sprint
-        context['current_unfinished_stories'] = (
-            {
-                'zgodba': story,
-                'naloge_dokoncane': Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count(),
-                'naloge_vse': Naloga.objects.filter(zgodba=story).count()
-            }
-            for story in unfinished_stories.filter(sprint=curr_sprint)
-        )
+
+        context['current_unfinished_stories'] = get_story_objects(unfinished_stories.filter(sprint=curr_sprint))
+        context['finished_stories'] += get_sprint_story_objects([curr_sprint], finished_stories)
         try:
             vsota_ocen = Zgodba.objects.filter(sprint=curr_sprint).aggregate(Sum('ocena'))["ocena__sum"]
             context['sum_zgodb'] = vsota_ocen
@@ -518,12 +541,12 @@ def stories_to_sprint(request, project_id, sprint_id):
     instance = Sprint.objects.get(id=sprint_id)
     try:
         if request.method == 'POST':
-            ids = request.POST["storyIds"]
+            ids = request.POST["storyIds"].split(",")
             for story in Zgodba.objects.filter(id__in=ids):
                 story.sprint = instance
                 story.save()
         return HttpResponse(status=status.HTTP_200_OK)
-    except Exception:
+    except Exception as e:
         return HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

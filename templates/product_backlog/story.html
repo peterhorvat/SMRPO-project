@@ -12,12 +12,33 @@
                 </div>
             {% endif %}
             <div class="col align-items-center">
-                <h4 class="card-title text-center mb-0" style="margin-right: 5px">
-                    {{ zgodba_object.zgodba.ime }}
-                    {% if zgodba_object.zgodba.sprint %}
-                        <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
-                    {% endif %}
-                </h4>
+                <h4 class="card-title mb-0" style="margin-right: 5px">{{ zgodba_object.zgodba.ime }}</h4>
+                <br/>
+                {% if zgodba_object.zgodba.sprint %}
+                    <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
+                {% endif %}
+                <span>Ocena časovne zahtevnosti [točke]: {{ zgodba_object.zgodba.ocena|default_if_none:"0" }}</span>
+                <hr/>
+                {% if zgodba_object.work_done|length > 0 %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Sprint</th>
+                                <th scope="col">Opravljeno delo [ure]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sprint_work in zgodba_object.work_done %}
+                                <tr>
+                                    <td>{{ sprint_work.sprint.ime }}</td>
+                                    <td style="text-align: center">{{ sprint_work.work }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <span>Ni še bilo opravljenega dela</span>
+                {% endif %}
             </div>
         </div>
         {% if project_owner is not None or scrum_master is not None %}
@@ -30,8 +51,6 @@
                             <input min="0" class="form-control" type="number" id="ocena" name="casovnaZahtevnost" placeholder="{{ zgodba_object.zgodba.ocena }}"
                                    style="width: 20%" onchange="checkFib(this,{{ zgodba_object.zgodba.id }})"  data-toggle="tooltip" data-placement="top">
                             <p class="d-flex" style="margin-bottom: 0">pt</p>
-                        {% else %}
-                            <label for="casovnaZahtevnost">Ocena: {{ zgodba.ocena }} pt</label>
                         {% endif %}
                     </form>
                     <button class="btn" data-bs-toggle="modal" data-bs-target="#addNewStory"
