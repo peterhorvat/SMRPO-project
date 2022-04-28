@@ -430,7 +430,7 @@ def product_backlog(request, project_id):
             for story in unfinished_stories.filter(sprint=curr_sprint)
         )
         try:
-            vsota_ocen = Zgodba.objects.filter(sprint=curr_sprint).aggregate(sum=Sum('ocena'))['sum']
+            vsota_ocen = Zgodba.objects.filter(sprint=curr_sprint).aggregate(Sum('ocena'))["ocena__sum"]
             context['sum_zgodb'] = vsota_ocen
             context['sum_zgodb_frac'] = (vsota_ocen / curr_sprint.hitrost)*100
         except Exception:
