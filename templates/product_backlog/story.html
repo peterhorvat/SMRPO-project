@@ -18,8 +18,7 @@
                     <h5>Sprint: {{ zgodba_object.zgodba.sprint.ime }}</h5>
                 {% endif %}
                 <span>Ocena časovne zahtevnosti [točke]: {{ zgodba_object.zgodba.ocena|default_if_none:"0" }}</span>
-                {% if scrum_master %}
-
+                {% if scrum_master and not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.sprint is None %}
                     <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#changeTime"
                             data-bs-Ocena="{{ zgodba_object.zgodba.ocena|default_if_none:0 }}"
                             data-bs-Action="/api/projects/{{ projekt.id }}/stories/{{ zgodba_object.zgodba.id }}/time/">
@@ -45,7 +44,7 @@
                         </tbody>
                     </table>
                 {% else %}
-                    <span>Ni še bilo opravljenega dela</span>
+                    <span>Ni opravljenega dela</span>
                 {% endif %}
             </div>
         </div>
