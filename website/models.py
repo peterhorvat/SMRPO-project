@@ -200,7 +200,7 @@ class Objava(models.Model):
 
 
 class Komentar(models.Model):
-    clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
+    uporabnik = models.ForeignKey(Uporabnik, null=True, on_delete=models.CASCADE, verbose_name="Uporabnik")
     objava = models.ForeignKey(Objava, null=True, on_delete=models.CASCADE, verbose_name="Objava")
     besedilo = RichTextField(verbose_name="Vsebina komentarja")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -211,7 +211,7 @@ class Komentar(models.Model):
         verbose_name = "Komentar"
 
     def __str__(self):
-        return f"[{self.clan}:{self.objava}]"
+        return f"[{self.uporabnik}:{self.objava}]"
 
 
 # Je rekel da mora biti nujno ločeno ker je "svoja stvar"

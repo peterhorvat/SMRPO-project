@@ -534,7 +534,7 @@ def project_summary(request, project_id):
     scrum_master = ScrumMaster.objects.get(projekt=instance)
     project_owner = ProjectOwner.objects.get(projekt=instance)
     project_posts = Objava.objects.filter(projekt=instance)
-    komentarji = Komentar.objects.filter(clan__projekt=instance)
+    komentarji = Komentar.objects.filter(objava__projekt=instance)
     return render(request, 'project_summary.html',
                   {
                       'projekt': instance,
@@ -547,6 +547,16 @@ def project_summary(request, project_id):
                       'comment_form': KomentarForm,
                       'komentarji': komentarji
                   })
+
+
+@login_required
+def delete_comment(request, project_id, comment_id):
+    komentar = Komentar.objects.get(id=comment_id)
+    if komentar.uporabnik != request.user:
+        raise PermissionDenied
+    else:
+        komentar.delete()
+        return redirect('project_summary', project_id)
 
 
 @login_required

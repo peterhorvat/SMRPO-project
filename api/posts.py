@@ -45,7 +45,7 @@ class CommentPost(View):
         if not comment_form.is_valid():
             return JsonResponse({'Message': comment_form.errors}, status=400)
         comment_instance = comment_form.save(commit=False)
-        comment_instance.clan = Clan.objects.get(projekt=project, uporabnik=request.user)
+        comment_instance.uporabnik = request.user
         comment_instance.objava = objava
 
         comment_instance.save()

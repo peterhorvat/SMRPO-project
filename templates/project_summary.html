@@ -141,14 +141,27 @@
                                             <button class="btn btn-success"
                                                     style="font-size: 50%"
                                                     data-bs-toggle="modal" data-bs-target="#addNewComment"
-                                                    data-bs-Action="/api/projects/{{ projekt.id }}/addComment/{{ post.id }}">
+                                                    data-bs-Action="/api/projects/{{ projekt.id }}/addComment/{{ post.id }}/">
                                                 <i class="fa fa-plus"></i> Dodaj Komentar
                                             </button>
                                         </div>
                                     </div>
                                     {% for komentar in komentarji %}
                                         {% if komentar.objava.id == post.id %}
-                                            <p><i class="fas fa-comment"></i> {{ komentar.clan }}: {{ komentar.besedilo }}</p>
+                                            <div class="row align-items-center border mb-1 mt-1">
+                                                <div class="col-3 align-items-center mb-1 mt-1">
+                                                   <h4 class="mb-0" style="font-size: 80%"><i class="fas fa-comment"></i> {{ komentar.uporabnik.username }}:</h4>
+                                                </div>
+
+                                                <div class="col-8 align-items-center mb-1 mt-1">
+                                                    <p class="mb-0" style="font-size: 80%;">{{ komentar.besedilo }}</p>
+                                                </div>
+                                                {% if komentar.uporabnik == request.user %}
+                                                    <div class="col-1 align-items-center mb-1 mt-1">
+                                                        <a type="button" href="{% url 'delete_comment' projekt.id komentar.id %}" class="btn btn-sm btn-danger"><i class="fas fa-times"></i></a>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
@@ -242,5 +255,31 @@
                     }
                });
         });
+
+
+        let modalComment = document.getElementById("addNewComment");
+        let formComment = document.getElementById("addNewCommentForm");
+
+        modalComment.addEventListener("show.bs.modal", function (event) {
+            let button = event.relatedTarget;
+            formComment.action = button.getAttribute("data-bs-Action");
+        });
+
+        formComment.addEventListener("submit", function (event) {
+           event.preventDefault();
+           $.post(formComment.action, $(this).serialize())
+               .done(function () {
+                   location.reload();
+               })
+               .fail(function (jqXHR, textStatus, errorThrown) {
+                   if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
+                        alert(jqXHR.responseJSON.Message);
+                    } else {
+                        alert(errorThrown);
+                    }
+               });
+        });
+
+
     </script>
 {% endblock %}

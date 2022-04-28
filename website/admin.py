@@ -57,8 +57,8 @@ class NalogaAdmin(admin.ModelAdmin):
 
 
 class KomentarAdmin(admin.ModelAdmin):
-    search_fields = ('clan',)
-    list_display = ['clan', 'objava', 'besedilo']
+    search_fields = ('uporabnik',)
+    list_display = ['uporabnik', 'objava', 'besedilo']
     # list_filter = []
 
 

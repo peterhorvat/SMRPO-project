@@ -61,6 +61,6 @@ urlpatterns = [
     path('task/<int:pk>/remove', v.remove_task, name='remove_task'),
 
     path('stories_to_sprint/<int:project_id>/<int:sprint_id>/', v.stories_to_sprint, name='stories_to_sprint'),
-
+    path('projects/<int:project_id>/delete_comment/<int:comment_id>/', v.delete_comment, name='delete_comment'),
     path('api/', include('api.urls'), name='API'),
 ]
