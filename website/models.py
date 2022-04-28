@@ -257,8 +257,9 @@ class Dokumentacija(models.Model):
 class BelezenjeCasa(models.Model):
     clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
     naloga = models.ForeignKey(Naloga, on_delete=models.CASCADE, verbose_name="Naloga")
+    sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE, verbose_name="Sprint")
     zacetek = models.DateTimeField(verbose_name="Čas začetka")
-    konec = models.DateTimeField(verbose_name="Čas konca")
+    ure = models.IntegerField(verbose_name="Ure")
     presoja = models.CharField(max_length=255, verbose_name="Končna presoja")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -266,7 +267,6 @@ class BelezenjeCasa(models.Model):
     class Meta:
         verbose_name_plural = "Zabeležen čas"
         verbose_name = "Beleženja časa"
-        unique_together = ["clan", "naloga"]
 
     def __str__(self):
         return f"[{self.naloga}:{self.clan}]"
@@ -285,3 +285,9 @@ class Besedila(models.Model):
 
     def __str__(self):
         return f'{self.naslov}'
+
+
+class PastSprints(models.Model):
+    sprint = models.ForeignKey(Sprint, on_delete=models.DO_NOTHING, verbose_name="Pretekli Sprint")
+    zgodba = models.ForeignKey(Zgodba, on_delete=models.DO_NOTHING, verbose_name="Zgodba")
+

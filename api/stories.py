@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.forms.models import model_to_dict
 
 from api.helper import is_in_project
-from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga
+from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga, PastSprints
 from website.forms import ZgodbaForm, ZgodbaOpombeForm
 from website.decorators import restrict_PO_SM, restrict_PO
 
@@ -137,6 +137,10 @@ class StoriesRejectApi(View):
         opombeForm = ZgodbaOpombeForm(request.POST, instance=story)
         if opombeForm.is_valid():
             story.opombe = opombeForm.cleaned_data['opombe']
+
+            past_info = PastSprints(zgodba=story, sprint=story.sprint)
+            past_info.save()
+
             story.sprint = None
             story.save()
             return JsonResponse({'Message': 'Zgodba uspešno zavrnjena.'}, status=200)
