@@ -437,7 +437,8 @@ def product_backlog(request, project_id):
             context['sum_zgodb'] = 0
             context['sum_zgodb_frac'] = 0.0
     except Sprint.DoesNotExist:
-        pass
+        context['sum_zgodb'] = 0
+        context['sum_zgodb_frac'] = 0.0
 
     return render(request, "product_backlog/product_backlog.html", context)
 
