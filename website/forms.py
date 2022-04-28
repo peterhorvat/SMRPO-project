@@ -6,7 +6,7 @@ from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, UserChangeForm
 from django.db.models import Sum
 
-from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan, Objava
+from .models import Uporabnik, Projekt, Zgodba, Sprint, Naloga, Clan, Objava, Komentar
 
 from django.forms import ModelForm, DateInput
 from django.core.exceptions import ValidationError
@@ -217,3 +217,9 @@ class ObjavaForm(forms.ModelForm):
     class Meta:
         model = Objava
         fields = ['naslov', 'vsebina']
+
+
+class KomentarForm(forms.ModelForm):
+    class Meta:
+        model = Komentar
+        fields = ['besedilo']

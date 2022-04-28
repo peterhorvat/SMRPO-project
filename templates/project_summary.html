@@ -122,7 +122,7 @@
                         </button>
                     </div>
                     <br/>
-                    <div>
+                    <div class="mb-5">
                         {% for post in project_posts %}
                             <div class="card">
                                 <div class="card-header">
@@ -131,6 +131,26 @@
                                 </div>
                                 <div class="card-body">
                                     <p class="card-text">{{ post.vsebina|linebreaks }}</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between border-bottom mb-3">
+                                        <div>
+                                            <h5 class="card-text">Komentarji</h5>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-success"
+                                                    style="font-size: 50%"
+                                                    data-bs-toggle="modal" data-bs-target="#addNewComment"
+                                                    data-bs-Action="/api/projects/{{ projekt.id }}/addComment/{{ post.id }}">
+                                                <i class="fa fa-plus"></i> Dodaj Komentar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% for komentar in komentarji %}
+                                        {% if komentar.objava.id == post.id %}
+                                            <p><i class="fas fa-comment"></i> {{ komentar.clan }}: {{ komentar.besedilo }}</p>
+                                        {% endif %}
+                                    {% endfor %}
                                 </div>
                             </div>
                             <br/>
@@ -160,6 +180,30 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
                     <button type="submit" form="addNewPostForm" class="btn btn-success">Objavi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="addNewComment" aria-labelledby="addNewComment" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj Komentar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" class="form-group" id="addNewCommentForm" action="">
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            {{ comment_form|crispy }}
+                            <p class="text-right small" style="font-size: 70%; padding-right: 5px"><i>* Označena polja so obvezna.</i></p>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
+                    <button type="submit" form="addNewCommentForm" class="btn btn-success">Objavi</button>
                 </div>
             </div>
         </div>

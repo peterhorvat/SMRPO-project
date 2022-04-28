@@ -17,7 +17,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci
+    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci, KomentarForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, BelezenjeCasa
 from itertools import filterfalse
 
@@ -544,6 +544,7 @@ def project_summary(request, project_id):
                       'project_owner': project_owner,
                       'project_posts': project_posts,
                       'post_form': ObjavaForm,
+                      'comment_form': KomentarForm,
                       'komentarji': komentarji
                   })
 

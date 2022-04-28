@@ -58,7 +58,7 @@ class NalogaAdmin(admin.ModelAdmin):
 
 class KomentarAdmin(admin.ModelAdmin):
     search_fields = ('clan',)
-    list_display = ['clan', 'zgodba', 'besedilo']
+    list_display = ['clan', 'objava', 'besedilo']
     # list_filter = []
 
 
@@ -80,10 +80,10 @@ class DokumentacijaAdmin(admin.ModelAdmin):
     # list_filter = []
 
 
-class BelezenjeCasaAdmin(admin.ModelAdmin):
-    search_fields = ('clan',)
-    list_display = ['clan', 'zacetek', 'ure', 'presoja']
-    # list_filter = []
+# class BelezenjeCasaAdmin(admin.ModelAdmin):
+#     search_fields = ('clan',)
+#     list_display = ['clan', 'zacetek', 'ure', 'presoja']
+#     # list_filter = []
 
 
 class BesedilaAdmin(admin.ModelAdmin):
@@ -104,5 +104,5 @@ admin.site.register(Komentar, KomentarAdmin)
 admin.site.register(Objava, ObjavaAdmin)
 admin.site.register(DailyScrum, DailyScrumAdmin)
 admin.site.register(Dokumentacija, DokumentacijaAdmin)
-admin.site.register(BelezenjeCasa, BelezenjeCasaAdmin)
+admin.site.register(BelezenjeCasa)
 admin.site.register(Besedila, BesedilaAdmin)
