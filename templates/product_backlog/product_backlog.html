@@ -294,6 +294,9 @@
                         "casovnaZahtevnost": $("#ocena").val(),
                         "idZgodbe": idZgodbe
                     },
+                    success: function () {
+                        window.location.reload();
+                    }
                 });
             }else{
                 el.get(0).setCustomValidity("Število mora biti v fibbonacijevem zaporedju.");
