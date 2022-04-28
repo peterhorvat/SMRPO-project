@@ -659,13 +659,13 @@ def finish_task(request, task_id):
     task.save()
     story = Zgodba.objects.get(id=task.zgodba_id)
     clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
-    if datetime.now().date() is belezenje_casa.start.date():
-        belezenje_casa.ure += datetime.now().hour - belezenje_casa.start.hour
-    else:
-        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now()).save()
-    belezenje_casa.konec = datetime.now()
-    belezenje_casa.save()
+    #belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
+    #if datetime.now().date() is belezenje_casa.start.date():
+    #    belezenje_casa.ure += datetime.now().hour - belezenje_casa.start.hour
+    #else:
+    #    BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now()).save()
+    #belezenje_casa.konec = datetime.now()
+    #belezenje_casa.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
