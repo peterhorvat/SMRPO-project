@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load crispy_forms_filters %}
+{% block content %}
+    <div class="d-flex" style="padding: 10px">
+        <table class="table text-center table-striped table-bordered">
+            {% csrf_token %}
+            <thead class="thead-dark">
+            <tr>
+                <th>
+                    Datum prvega dela na nalogi
+                </th>
+                <th>
+                    Datum zadnjega začetka dela
+                </th>
+                <th>
+                    Ime projekta
+                </th>
+                <th>
+                    Ime naloge
+                </th>
+                <th>
+                    Opravljene ure
+                </th>
+                <th>
+                    Ocenjene ure
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for task in tasks %}
+                <tr style="vertical-align: middle">
+                    <td>{{ task.created_at }}</td>
+                    <td>{{ task.zacetek }}</td>
+                    <td>{{ task.naloga.zgodba.projekt.ime }}</td>
+                    <td>{{ task.naloga.ime }}</td>
+                    <td><input type="number" min="0" class="form-control" placeholder=" {{ task.ure }}" onchange="posodobiPodatke(this,{{ task.id }}, '0', '{{ task.created_at }}')"></td>
+                    {% if task.presoja == 0 %}
+                        <td><input type="number" min="0" class="form-control" placeholder="Ni še ocene za nalogo" onchange="posodobiPodatke(this,{{ task.id }},'1', '{{ task.created_at }}')"></td>
+                    {% else %}
+                        <td><input type="number" min="0" class="form-control" placeholder="{{ task.presoja }}" onchange="posodobiPodatke(this,{{ task.id }},'1', '{{ task.created_at }}')"></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+{% block scripts %}
+    <script>
+        function posodobiPodatke(el, taskId, what, createdAt) {
+            let csrftoken = $("input[type=hidden]").val();
+
+            $.ajax({
+                type:"POST",
+                url:"update_data/"+taskId+"/",
+                data:{
+                    "csrfmiddlewaretoken": csrftoken,
+                    "taskId": taskId,
+                    "what": what,
+                    "value": $(el).val(),
+                    "time": createdAt
+                }
+            })
+        }
+    </script>
+{% endblock %}

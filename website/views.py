@@ -641,6 +641,7 @@ def start_timer(request, task_id):
         belezenje_casa.save()
     return HttpResponse(status=200)
 
+
 @login_required
 def end_timer(request, task_id):
     task = Naloga.objects.get(id=task_id)
@@ -651,8 +652,39 @@ def end_timer(request, task_id):
         belezenje_casa.ure += timezone.now().hour - belezenje_casa.zacetek.hour
     else:
         belezenje_casa += belezenje_casa.zacetek.hour - timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) ,ure= (timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timezone.now()).hour).save()
+        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0),
+                      ure=(timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timezone.now()).hour).save()
     belezenje_casa.save()
+    return HttpResponse(status=200)
+
+
+@login_required
+def timetable(request):
+    user = Uporabnik.objects.get(username=request.user.username)
+    return render(request, "timetable.html", {"tasks": BelezenjeCasa.objects.filter(clan__uporabnik=user)})
+
+
+@login_required
+def timetable_update(request, task_id):
+    what_to_update = int(request.POST["what"])
+    beleziCas = BelezenjeCasa.objects.get(pk=int(task_id))
+    if what_to_update == 0:
+        if beleziCas.presoja != 0 and int(request.POST["value"]) >= beleziCas.presoja:
+            beleziCas.ure += abs(int(request.POST["value"]) - beleziCas.presoja)
+            finish_task(request, beleziCas.naloga.id)
+        else:
+            beleziCas.ure = int(request.POST["value"])
+        beleziCas.save()
+    else:
+        presoja = int(request.POST["value"])
+        if presoja > beleziCas.ure:
+            beleziCas.presoja = presoja
+        elif presoja == beleziCas.ure:
+            beleziCas.presoja = presoja
+            finish_task(request, beleziCas.naloga.id)
+        else:
+            return HttpResponse(status=400, content="Presoja ne mora biti manjša kakor že opravljeno število ur.")
+        beleziCas.save()
     return HttpResponse(status=200)
 
 

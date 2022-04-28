@@ -259,8 +259,8 @@ class BelezenjeCasa(models.Model):
     naloga = models.ForeignKey(Naloga, on_delete=models.CASCADE, verbose_name="Naloga")
     sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE, verbose_name="Sprint")
     zacetek = models.DateTimeField(verbose_name="Čas začetka")
-    ure = models.IntegerField(verbose_name="Ure")
-    presoja = models.CharField(max_length=255, verbose_name="Končna presoja")
+    ure = models.IntegerField(verbose_name="Ure", default=0)
+    presoja = models.IntegerField(verbose_name="Končna presoja", default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
