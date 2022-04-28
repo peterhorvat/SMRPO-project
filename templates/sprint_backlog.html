@@ -117,4 +117,29 @@
             })
         });
     </script>
+    <script>
+        function changeButton(el, task_id){
+            let i = el.children[1].children[0];
+            if(i.classList[1] === "fa-hourglass-start"){
+                $.ajax({
+                    type: "POST",
+                    url: "/start_timer/"+task_id+"/",
+                    data:{"csrfmiddlewaretoken":el.children[0].value},
+                    success: function (status,data,xhr) {
+                        i.classList.remove("fa-hourglass-start");
+                        i.classList.add("fa-hourglass-end");
+                        el.classList.remove("btn-success");
+                        el.classList.add("btn-danger");
+                        el.title= "Prenehaj z beleženjem časa.";
+                    }
+                })
+            }else{
+                i.classList.add("fa-hourglass-start");
+                i.classList.remove("fa-hourglass-end");
+                el.classList.remove("btn-danger");
+                el.classList.add("btn-success");
+                el.title = "Začni beležit čas.";
+            }
+        }
+    </script>
 {% endblock %}

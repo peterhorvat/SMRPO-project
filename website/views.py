@@ -363,7 +363,7 @@ def get_story_objects(stories, check_tasks=True):
     for story in stories:
         story_object = {'zgodba': story}
         if check_tasks:
-            story_object['naloge_dokoncane'] =  Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count()
+            story_object['naloge_dokoncane'] = Naloga.objects.filter(zgodba=story, status=Naloga.FINISHED).count()
             story_object['naloge_vse'] = Naloga.objects.filter(zgodba=story).count()
         story_object['work_done'] = get_work_for_story(story)
         r.append(story_object)
@@ -616,12 +616,7 @@ def accept_task(request, task_id):
     task.clan = clan
     task.status = Naloga.ACCEPTED
     task.save()
-    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
-    if belezenje_casa is None:
-        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now(), ure=0).save()
-    else:
-        belezenje_casa.start = datetime.now()
-        belezenje_casa.save()
+
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
@@ -632,6 +627,34 @@ def accept_task(request, task_id):
                         })
 
 
+@login_required
+def start_timer(request, task_id):
+    print(request.POST)
+    task = Naloga.objects.get(id=task_id)
+    story = Zgodba.objects.get(id=task.zgodba_id)
+    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
+    if belezenje_casa is None:
+        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=timezone.now(), ure=0).save()
+    else:
+        belezenje_casa.zacetek = timezone.now()
+        belezenje_casa.save()
+    return HttpResponse(status=200)
+
+@login_required
+def end_timer(request, task_id):
+    task = Naloga.objects.get(id=task_id)
+    story = Zgodba.objects.get(id=task.zgodba_id)
+    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
+    if datetime.now().date() == belezenje_casa.zacetek.date():
+        belezenje_casa.ure += timezone.now().hour - belezenje_casa.zacetek.hour
+    else:
+        belezenje_casa += belezenje_casa.zacetek.hour - timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) ,ure= (timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timezone.now()).hour).save()
+    belezenje_casa.save()
+    return HttpResponse(status=200)
+
 
 @login_required
 def resign_task(request, task_id):
@@ -639,6 +662,7 @@ def resign_task(request, task_id):
     task.clan = None
     task.status = Naloga.NOT_ASSIGNED
     task.save()
+    end_timer(request, task_id)
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
@@ -656,13 +680,7 @@ def finish_task(request, task_id):
     task.save()
     story = Zgodba.objects.get(id=task.zgodba_id)
     clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-    #belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
-    #if datetime.now().date() is belezenje_casa.start.date():
-    #    belezenje_casa.ure += datetime.now().hour - belezenje_casa.start.hour
-    #else:
-    #    BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now()).save()
-    #belezenje_casa.konec = datetime.now()
-    #belezenje_casa.save()
+    end_timer(request, task_id)
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
