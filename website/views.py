@@ -161,7 +161,7 @@ def sprint_backlog(request, project_id):
     sprint_backlog_stories = []
     for story in stories:
         if story.sprint:
-            if story.sprint.zacetni_cas <= date.today() <= story.sprint.koncni_cas:
+            if story.sprint.zacetni_cas <= date.today() <= story.sprint.koncni_cas and not story.realizirana:
                 sprint_backlog_stories.append(story)
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
