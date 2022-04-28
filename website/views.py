@@ -621,7 +621,7 @@ def accept_task(request, task_id):
     task.save()
     belezenje_casa = BelezenjeCasa.objects.filter(clan=clan, naloga=task).last()
     if belezenje_casa is None:
-        BelezenjeCasa(clan=clan, naloga=task, zgodba=story, sprint=story.sprint, zacetek=datetime.now()).save()
+        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now(), ure=0).save()
     else:
         belezenje_casa.start = datetime.now()
         belezenje_casa.save()
@@ -633,6 +633,7 @@ def accept_task(request, task_id):
                             }),
                             'HX-Redirect': url
                         })
+
 
 
 @login_required
@@ -662,7 +663,7 @@ def finish_task(request, task_id):
     if datetime.now().date() is belezenje_casa.start.date():
         belezenje_casa.ure += datetime.now().hour - belezenje_casa.start.hour
     else:
-        BelezenjeCasa(clan=clan, naloga=task, zgodba=story, sprint=story.sprint, zacetek=datetime.now()).save()
+        BelezenjeCasa(clan=clan, naloga=task, sprint=story.sprint, zacetek=datetime.now()).save()
     belezenje_casa.konec = datetime.now()
     belezenje_casa.save()
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
