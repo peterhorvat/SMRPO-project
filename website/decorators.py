@@ -20,13 +20,13 @@ def restrict_SM(function):
 
 
 def restrict_PO(function):
-    def wrap(request, *args, **kwargs):
+    def wrap(request, project_id, *args, **kwargs):
         if request.user.is_superuser:
-            return function(request, *args, **kwargs)
+            return function(request, project_id, *args, **kwargs)
         try:
-            ProjectOwner.objects.get(uporabnik=request.user)
+            ProjectOwner.objects.get(projekt_id=project_id, uporabnik=request.user)
 
-            return function(request, *args, **kwargs)
+            return function(request, project_id, *args, **kwargs)
         except ProjectOwner.DoesNotExist:
             raise PermissionDenied
 
@@ -36,16 +36,16 @@ def restrict_PO(function):
 
 
 def restrict_PO_SM(function):
-    def wrap(request, *args, **kwargs):
+    def wrap(request, project_id, *args, **kwargs):
         if request.user.is_superuser:
-            return function(request, *args, **kwargs)
+            return function(request, project_id, *args, **kwargs)
         try:
-            ProjectOwner.objects.get(uporabnik=request.user)
-            return function(request, *args, **kwargs)
+            ProjectOwner.objects.get(projekt_id=project_id, uporabnik=request.user)
+            return function(request, project_id, *args, **kwargs)
         except ProjectOwner.DoesNotExist:
             try:
-                ScrumMaster.objects.get(uporabnik=request.user)
-                return function(request, *args, **kwargs)
+                ScrumMaster.objects.get(projekt_id=project_id, uporabnik=request.user)
+                return function(request, project_id, *args, **kwargs)
             except ScrumMaster.DoesNotExist:
                 raise PermissionDenied
 

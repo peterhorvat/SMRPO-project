@@ -490,7 +490,7 @@ def sprint_list(request, project_id):
         isSM = True
     except ScrumMaster.DoesNotExist:
         isSM = False
-    sprinti = Sprint.objects.filter(projekt=project)
+    sprinti = Sprint.objects.filter(projekt=project).order_by("zacetni_cas")
     return render(request, 'sprint_list.html', {'sprinti': sprinti,
                                                 'izbran_projekt': project, 'cas': cas_now,
                                                 'isSM': isSM})
@@ -501,8 +501,6 @@ def sprint_list(request, project_id):
 def edit_sprint(request, project_id, sprint_id):
     try:
         instance = get_object_or_404(Sprint, id=sprint_id)
-        if instance.zacel():
-            raise PermissionDenied
         if request.method == 'POST':
             if instance.zacel():
                 form = EditSprintFormTekoci(request.POST or None, instance=instance)
@@ -539,6 +537,11 @@ def stories_to_sprint(request, project_id, sprint_id):
     try:
         if request.method == 'POST':
             ids = request.POST["storyIds"].split(",")
+            sum_ocen = 0
+            for story in Zgodba.objects.filter(id__in=ids):
+                sum_ocen += story.ocena
+            if sum_ocen > instance.hitrost:
+                return HttpResponse(status=status.HTTP_403_FORBIDDEN)
             for story in Zgodba.objects.filter(id__in=ids):
                 story.sprint = instance
                 story.save()

@@ -34,7 +34,7 @@
                     {% endif %}
                     {% if current_sprint %}
                         <div class="d-flex justify-content-between">
-                            <h3>Trenutni sprint: <span class="h3">{{ current_sprint.ime }}</span></h3>
+                            <h3>Trenutni sprint: <span class="h4">#{{ current_sprint.id }} {{ current_sprint.ime }}</span> <span class="h5">[hitrost: {{ current_sprint.hitrost }}]</span></h3>
                             {% if scrum_master is not None %}
                                 <button id="addStoriesToSprintBtn" class="btn btn-success mb-2"
                                     {% if sum_zgodb >= current_sprint.hitrost %} disabled {% endif %}
@@ -329,26 +329,25 @@
                 })
             }
             else{
-                if({{ sum_zgodb }} > {% if current_sprint %} {{ current_sprint.hitrost }} {% else %} 0 {% endif %}){
-                    Swal.fire({
-                        title: `Skupna ocena zgodb presega hitrost sprinta!`,
-                        icon: 'warning',
-                        showCloseButton: false,
-                        allowOutsideClick: true,
-                    })
-                }
-                else{
-                    $.ajax({
-                        type: "POST",
-                        url: "/stories_to_sprint/{{ projekt.id }}/{{ current_sprint.id }}/",
-                        data: {
-                            "storyIds": checkedStories.join(",")
-                        },
-                        success: () => {
-                            location.reload();
-                        }
-                    });
-                }
+                $.ajax({
+                    type: "POST",
+                    url: "/stories_to_sprint/{{ projekt.id }}/{{ current_sprint.id }}/",
+                    data: {
+                        "storyIds": checkedStories.join(",")
+                    },
+                    success: () => {
+                        location.reload();
+                    },
+                    error:() =>{
+                        Swal.fire({
+                            title: `Skupna ocena zgodb presega hitrost sprinta!`,
+                            icon: 'warning',
+                            showCloseButton: false,
+                            allowOutsideClick: true,
+                        })
+                    }
+                });
+
             }
 
         });

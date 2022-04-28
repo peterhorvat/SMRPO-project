@@ -107,14 +107,14 @@ class Sprint(models.Model):
         verbose_name = "Sprint"
 
     def pretekel(self):
-        return self.koncni_cas < date.today()
+        return self.koncni_cas <= date.today()
 
     def bo_pretekel(self):
         razlika = self.koncni_cas - date.today()
         return razlika.days < 2
 
     def zacel(self):
-        return self.zacetni_cas < date.today()
+        return self.zacetni_cas <= date.today()
 
     def __str__(self):
         return f"[{self.projekt}] {self.ime}"
