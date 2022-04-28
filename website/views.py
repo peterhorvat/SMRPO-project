@@ -17,7 +17,7 @@ from rest_framework.exceptions import PermissionDenied
 
 from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
-    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci, KomentarForm
+    EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci, KomentarForm, ZgodbaOcenaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, \
     BelezenjeCasa, PastSprints
 from itertools import filterfalse
@@ -371,10 +371,11 @@ def get_story_objects(stories, check_tasks=True):
 
 
 def get_work_for_story(story):
-    work = [get_work_for_story_sprint(story, story.sprint)]
+    work = []
     past_sprints = PastSprints.objects.filter(zgodba=story)
-    for past_sprint in past_sprints:
-        work.append(get_work_for_story_sprint(story, past_sprint.sprint))
+    all_sprints = list(set([story.sprint] + [ps.sprint for ps in past_sprints]))
+    for sprint in all_sprints:
+        work.append(get_work_for_story_sprint(story, sprint))
     return list(filter(lambda w: w is not None, work))
 
 
@@ -406,13 +407,9 @@ def product_backlog(request, project_id):
     context = {
         'projekt': project,
         'story_form': ZgodbaForm,
-        'opombe_form': ZgodbaOpombeForm
+        'opombe_form': ZgodbaOpombeForm,
+        'ocena_form': ZgodbaOcenaForm
     }
-    if request.method == "POST":
-        print(request.POST)
-        zgodba = Zgodba.objects.get(pk=int(request.POST["idZgodbe"]))
-        zgodba.ocena = int(request.POST["casovnaZahtevnost"])
-        zgodba.save()
     try:
         clan = Clan.objects.get(uporabnik=request.user, projekt=project)
     except ObjectDoesNotExist:

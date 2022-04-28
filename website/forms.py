@@ -223,3 +223,24 @@ class KomentarForm(forms.ModelForm):
     class Meta:
         model = Komentar
         fields = ['besedilo']
+
+
+class ZgodbaOcenaForm(forms.ModelForm):
+    class Meta:
+        model = Zgodba
+        fields = ['ocena']
+        widgets = {
+            'ocena': forms.NumberInput(attrs={'min': 0, 'type': 'number'})
+        }
+
+    def clean_ocena(self):
+        ocena = self.cleaned_data['ocena']
+        a = 0
+        b = 1
+        while b < ocena:
+            c = a + b
+            a = b
+            b = c
+        if b == ocena or a == ocena:
+            return ocena
+        raise ValidationError("Ocena mora biti v fibbonacijevem zaporedju.")

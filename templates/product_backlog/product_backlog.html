@@ -150,6 +150,29 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" tabindex="-1" id="changeTime" aria-labelledby="changeTime" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Spremeni časovno zahtevnost</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="changeTimeForm" action="" method="post">
+                            {% csrf_token %}
+                            <fieldset class="form-group">
+                                {{ ocena_form|crispy }}
+                            </fieldset>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
+                        <button type="submit" form="changeTimeForm" class="btn btn-success">Spremeni</button>
+                    </div>
+                </div>
+            </div>
+        </div>
    </div>
 {% endblock %}
 
@@ -266,43 +289,32 @@
                  });
              }
         }
-        function checkFib(el, idZgodbe, event) {
-            el = $(el);
-            let n = parseInt(el.val());
-            var fib = []; // Initialize array!
-            fib[0] = 0;
-            fib[1] = 1;
-            if(n === 0 || n === 1){
-                el.get(0).setCustomValidity("");
-                return;
-            }
-            let i = 2;
-            while(fib[i-1] < n){
 
-                fib.push(fib[i - 2] + fib[i - 1]) ;
-                i++;
-            }
-            if(fib[i-1]===n){
-                el.get(0).setCustomValidity("");
-                let form = $("#casovnaOcena");
-                console.log(idZgodbe);
-                $.ajax({
-                    type: "POST",
-                    url: form.attr("action"),
-                    data: {
-                        "csrfmiddlewaretoken": $("#casovnaOcena>input").val(),
-                        "casovnaZahtevnost": $("#ocena").val(),
-                        "idZgodbe": idZgodbe
-                    },
-                    success: function () {
-                        window.location.reload();
-                    }
-                });
-            }else{
-                el.get(0).setCustomValidity("Število mora biti v fibbonacijevem zaporedju.");
-                el.get(0).reportValidity();
-            }
-        }
+        let formOcena = document.getElementById("changeTimeForm");
+        let modalOcena = document.getElementById("changeTime");
+        modalOcena.addEventListener("show.bs.modal", function (event) {
+            console.log("SHOW MODAL");
+            let button = event.relatedTarget;
+            console.log(modalOcena.querySelector("input"));
+            console.log(button.getAttribute("data-bs-Ocena"));
+            modalOcena.querySelectorAll("input")[1].value = button.getAttribute("data-bs-Ocena");
+            formOcena.action = button.getAttribute("data-bs-Action");
+        });
+
+        formOcena.addEventListener("submit", function (event) {
+           event.preventDefault();
+            $.post(formOcena.action, $(this).serialize())
+               .done(function () {
+                   location.reload();
+               })
+               .fail(function (jqXHR, textStatus, errorThrown) {
+                   if (jqXHR.hasOwnProperty('responseJSON') && jqXHR.responseJSON.hasOwnProperty('Message')) {
+                       alert(jqXHR.responseJSON.Message);
+                   } else {
+                       alert(errorThrown);
+                   }
+               });
+        });
 
         $( "#addStoriesToSprintBtn" ).click(function() {
             var checkedStories = $('.storyCheckbox:checkbox:checked').map(function() {

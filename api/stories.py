@@ -8,8 +8,8 @@ from django.forms.models import model_to_dict
 
 from api.helper import is_in_project
 from website.models import Zgodba, Projekt, Uporabnik, ScrumMaster, ProjectOwner, Clan, Naloga, PastSprints
-from website.forms import ZgodbaForm, ZgodbaOpombeForm
-from website.decorators import restrict_PO_SM, restrict_PO
+from website.forms import ZgodbaForm, ZgodbaOpombeForm, ZgodbaOcenaForm
+from website.decorators import restrict_PO_SM, restrict_PO, restrict_SM
 
 
 class StoriesApi(View):
@@ -146,6 +146,29 @@ class StoriesRejectApi(View):
             return JsonResponse({'Message': 'Zgodba uspešno zavrnjena.'}, status=200)
         else:
             return JsonResponse({'Message': 'Nepravilno vnešene opombe!'}, status=400)
+
+
+class StoriesTimeEstimateApi(View):
+
+    @method_decorator(login_required)
+    @method_decorator(restrict_SM)
+    def post(self, request, project_id, story_id):
+        try:
+            project = Projekt.objects.get(id=project_id)
+        except Projekt.DoesNotExist:
+            return JsonResponse({'Message': 'Projekt ne obstaja!'}, status=404)
+        try:
+            story = Zgodba.objects.get(projekt=project, id=story_id)
+        except Zgodba.DoesNotExist:
+            return JsonResponse({'Message': 'Zgodba ne obstaja!'}, status=404)
+
+        ocenaForm = ZgodbaOcenaForm(request.POST, instance=story)
+        if not ocenaForm.is_valid():
+            return JsonResponse({'Message': ocenaForm.errors['ocena']}, status=400)
+
+        new_story = ocenaForm.save(commit=False)
+        new_story.save()
+        return JsonResponse({'Message': model_to_dict(new_story)}, status=200)
 
 
 def check_credentials(project_id, user_id):
