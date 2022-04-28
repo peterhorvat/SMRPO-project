@@ -184,7 +184,7 @@ def sprint_backlog(request, project_id):
         'clan': clan,
         'scrum_master': scrum_master,
         'product_owner': product_owner,
-        'form': ZgodbaForm()
+        'form': ZgodbaForm(),
     }
     return render(request=request, template_name="sprint_backlog.html", context=context)
 

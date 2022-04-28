@@ -7,7 +7,7 @@
         </script>
     {% endif %}
     <div id="taskModal" class="modal fade">
-        <div id="dialog" class="modal-dialog" hx-target="this"> </div>
+        <div id="dialog" class="modal-dialog" hx-target="this"></div>
     </div>
     <div class="container mt-4">
         <div class="d-flex justify-content-between mb-3">
@@ -25,6 +25,19 @@
                                 </h3>
                             </div>
                         </div>
+                        <div class="d-flex">
+                            <form class="d-flex"  style="flex-direction: row; text-align: center; align-items: center">
+                                {% csrf_token %}
+                                {% if scrum_master %}
+                                    <label for="casovnaZahtevnost">Ocena:</label>
+                                    <input min="0" class="form-control" type="number" id="ocena" name="casovnaZahtevnost" placeholder="{{ zgodba.ocena }}"
+                                           style="width: 20%" onchange="checkFib(this)"  data-toggle="tooltip" data-placement="top">
+                                    <p class="d-flex" style="margin-bottom: 0">pt</p>
+                                {% else %}
+                                    <label for="casovnaZahtevnost">Ocena: {{ zgodba.ocena }} pt</label>
+                                {% endif %}
+                            </form>
+                        </div>
                     </div>
                     <div class="card-body">
                         <h5>Vsebina:</h5>
@@ -39,11 +52,11 @@
                             Naloge
 
                             <div class="d-flex">
-                                {% if clan is not None or scrum_master is not None  %}
+                                {% if clan is not None or scrum_master is not None %}
                                     {% if zgodba.canAddTask %}
-                                <button  class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
-                                    <span><i class="fas fa-plus-square" style="color: gray"></i></span>
-                                </button>
+                                        <button class="btn" hx-get="{% url 'create_new_task' zgodba.id %}" hx-target="#dialog"/>
+                                        <span><i class="fas fa-plus-square" style="color: gray"></i></span>
+                                        </button>
                                     {% endif %}
 
                                 {% endif %}
@@ -61,7 +74,7 @@
                             <th scope="col" colspan="4">Akcije</th>
                         </tr>
                         </thead>
-                        <tbody class="tasksTable" id="tasksTable{{ forloop.counter0 }}"  hx-trigger="load, tasksListChanged from:body"
+                        <tbody class="tasksTable" id="tasksTable{{ forloop.counter0 }}" hx-trigger="load, tasksListChanged from:body"
                                hx-get="{% url 'tasks_list' zgodba.id %}">
                         </tbody>
                     </table>
@@ -102,30 +115,31 @@
 {% block scripts %}
     <script>
         ;(function () {
-  const tasks_modal = new bootstrap.Modal(document.getElementById("taskModal"))
-      document.body.addEventListener("tasksListChanged", function(evt){
-          tasks_modal.hide()
+            $('[data-toggle="tooltip"]').tooltip();
+            const tasks_modal = new bootstrap.Modal(document.getElementById("taskModal"))
+            document.body.addEventListener("tasksListChanged", function (evt) {
+                tasks_modal.hide()
             })
-  htmx.on("htmx:afterSwap", (e) => {
-    // Response targeting #dialog => show the modal
+            htmx.on("htmx:afterSwap", (e) => {
+                // Response targeting #dialog => show the modal
 
-    if (e.detail.target.id == "dialog") {
-      tasks_modal.show()
-    }
-  })
+                if (e.detail.target.id == "dialog") {
+                    tasks_modal.show()
+                }
+            })
 
-  htmx.on("htmx:beforeSwap", (e) => {
-    if (e.detail.target.id == "dialog" && !e.detail.xhr.response) {
-      tasks_modal.hide()
-      e.detail.shouldSwap = false
-    }
-  })
+            htmx.on("htmx:beforeSwap", (e) => {
+                if (e.detail.target.id == "dialog" && !e.detail.xhr.response) {
+                    tasks_modal.hide()
+                    e.detail.shouldSwap = false
+                }
+            })
 
-  // Remove dialog content after hiding
-  htmx.on("hidden.bs.modal", () => {
-    document.getElementById("dialog").innerHTML = ""
-  })
-})()
+            // Remove dialog content after hiding
+            htmx.on("hidden.bs.modal", () => {
+                document.getElementById("dialog").innerHTML = ""
+            })
+        })()
     </script>
     <script>
         $(function () {
@@ -195,6 +209,30 @@
             }).prop('selected', true);
             $("button[type='submit']")[0].innerText = button.getAttribute("data-bs-Gumb");
             form.action = button.getAttribute("data-bs-Action");
+        }
+        function checkFib(el) {
+            el = $(el);
+            let n = parseInt(el.val());
+            var fib = []; // Initialize array!
+            fib[0] = 0;
+            fib[1] = 1;
+            if(n === 0 || n === 1){
+                el.get(0).setCustomValidity("");
+                return;
+            }
+            let i = 2;
+            while(fib[i-1] < n){
+
+                fib.push(fib[i - 2] + fib[i - 1]) ;
+                i++;
+            }
+            if(fib[i-1]===n){
+                el.get(0).setCustomValidity("");
+
+            }else{
+                el.get(0).setCustomValidity("Število mora biti v fibbonacijevem zaporedju.");
+                el.get(0).reportValidity();
+            }
         }
     </script>
 {% endblock %}
