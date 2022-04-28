@@ -294,7 +294,7 @@
                 })
             }
             else{
-                if({{ sum_zgodb }} > {{ current_sprint.hitrost }}){
+                if({{ sum_zgodb }} > {% if current_sprint %} {{ current_sprint.hitrost }} {% else %} 0 {% endif %}){
                     Swal.fire({
                         title: `Skupna ocena zgodb presega hitrost sprinta!`,
                         icon: 'warning',
