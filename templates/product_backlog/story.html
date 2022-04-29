@@ -1,7 +1,7 @@
 <div class="card">
     <div class="card-header d-flex align-items-baseline" style="justify-content: space-between">
         <div class="row align-items-center">
-            {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.ocena > 0 and not zgodba_object.zgodba.sprint and scrum_master is not None %}
+            {% if not zgodba_object.zgodba.realizirana and zgodba_object.zgodba.ocena > 0 and not zgodba_object.zgodba.sprint and scrum_master is not None and zgodba_object.zgodba.prioriteta != -1 %}
                 <div class="col-1">
                     {% comment %} IF: PREVERI ALI SO VSI POGOJI IZPOLNJENI {% endcomment %}
                     <input

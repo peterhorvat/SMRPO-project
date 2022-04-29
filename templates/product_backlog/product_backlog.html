@@ -20,6 +20,9 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="pills-finished-tab" data-bs-toggle="pill" data-bs-target="#pills-finished" type="button" role="tab" aria-controls="pills-finished" aria-selected="false">Dokončane zgodbe</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-future-tab" data-bs-toggle="pill" data-bs-target="#pills-future" type="button" role="tab" aria-controls="pills-future" aria-selected="false">Prihodnje izdaje</button>
+            </li>
         </ul>
         <div id="pills-tabContent" class="tab-content mt-4 mb-2">
             <div id="pills-unfinished" class="tab-pane fade show active" role="tabpanel" aria-labelledby="pills-unfinished-tab">
@@ -79,26 +82,18 @@
                             </div>
                         </div>
                     {% endfor %}
-
-                    <hr/>
-
-                    <h2>Zgodbe v prihodnjih sprintih</h2>
-                    {% for zgodba_object in future_unfinished_stories %}
-                        {% include 'product_backlog/story.html' %}
-                        <br/>
-                    {% empty %}
-                        <div class="card">
-                            <div class="card-body">
-                                <p class="card-text">Ni zgodb v prihodnjih sprintih.</p>
-                            </div>
-                        </div>
-                    {% endfor %}
                 </div>
             </div>
             <div id="pills-finished" class="tab-pane fade" role="tabpanel" aria-labelledby="pills-finished-tab">
                 {% for sprint_object in finished_stories %}
                     {% include "product_backlog/stories-finished.html" %}
                     <br/>
+                {% endfor %}
+            </div>
+            <div id="pills-future" class="tab-pane fade" role="tabpanel" aria-labelledby="pills-future-tab">
+                {% for zgodba_object in future_unfinished_stories %}
+                    {% include "product_backlog/story.html" %}
+                    <br />
                 {% endfor %}
             </div>
         </div>

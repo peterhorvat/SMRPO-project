@@ -432,13 +432,16 @@ def product_backlog(request, project_id):
 
     curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
     past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lt=curr_time, koncni_cas__lt=curr_time).order_by('zacetni_cas')
-    future_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__gt=curr_time, koncni_cas__gt=curr_time).order_by('zacetni_cas')
 
     context['past_unfinished_stories'] = get_story_objects(unfinished_stories.filter(sprint__in=past_sprints))
-    context['future_unfinished_stories'] = get_story_objects(
-        unfinished_stories.filter(sprint__in=future_sprints), check_tasks=False)
     context['rest_unfinished_stories'] = get_story_objects(
-        unfinished_stories.exclude(sprint__isnull=False), check_tasks=False)
+        unfinished_stories.exclude(sprint__isnull=False).exclude(prioriteta=Zgodba.WONT_HAVE),
+        check_tasks=False
+    )
+    context['future_unfinished_stories'] = get_story_objects(
+        unfinished_stories.exclude(sprint__isnull=False).filter(prioriteta=Zgodba.WONT_HAVE),
+        check_tasks=False
+    )
 
     context['finished_stories'] = get_sprint_story_objects(past_sprints, finished_stories)
 
