@@ -619,7 +619,7 @@ def accept_task(request, task_id):
     task.clan = clan
     task.status = Naloga.ACCEPTED
     task.save()
-
+    start_timer(request, task_id)
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
