@@ -431,8 +431,8 @@ def product_backlog(request, project_id):
     unfinished_stories = Zgodba.objects.filter(projekt=project, realizirana=False)
 
     curr_time = datetime.now(pytz.timezone('Europe/Ljubljana'))
-    past_sprints = Sprint.objects.filter(projekt=project, koncni_cas__lte=curr_time).order_by('zacetni_cas')
-    future_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__gte=curr_time).order_by('zacetni_cas')
+    past_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__lt=curr_time, koncni_cas__lt=curr_time).order_by('zacetni_cas')
+    future_sprints = Sprint.objects.filter(projekt=project, zacetni_cas__gt=curr_time, koncni_cas__gt=curr_time).order_by('zacetni_cas')
 
     context['past_unfinished_stories'] = get_story_objects(unfinished_stories.filter(sprint__in=past_sprints))
     context['future_unfinished_stories'] = get_story_objects(
