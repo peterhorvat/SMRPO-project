@@ -1,59 +1,97 @@
 {% extends "base.html" %}
 {% load crispy_forms_filters %}
 {% block content %}
-    <div class="d-flex" style="padding: 10px">
-        <table class="table text-center table-striped table-bordered">
-            {% csrf_token %}
-            <thead class="thead-dark">
-            <tr>
-                <th>
-                    Datum prvega dela na nalogi
-                </th>
-                <th>
-                    Datum zadnjega začetka dela
-                </th>
-                <th>
-                    Ime projekta
-                </th>
-                <th>
-                    Ime naloge
-                </th>
-                <th>
-                    Opravljene ure
-                </th>
-                <th>
-                    Ocenjene ure
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for task in tasks %}
-                <tr style="vertical-align: middle">
-                    <td>{{ task.created_at }}</td>
-                    <td>{{ task.zacetek }}</td>
-                    <td>{{ task.naloga.zgodba.projekt.ime }}</td>
-                    <td>{{ task.naloga.ime }}</td>
-                    <td><input type="number" min="0" class="form-control" placeholder=" {{ task.ure }}" onchange="posodobiPodatke(this,{{ task.id }}, '0', '{{ task.created_at }}')"></td>
-                    {% if task.presoja == 0 %}
-                        <td><input type="number" min="0" class="form-control" placeholder="Ni še ocene za nalogo" onchange="posodobiPodatke(this,{{ task.id }},'1', '{{ task.created_at }}')"></td>
-                    {% else %}
-                        <td><input type="number" min="0" class="form-control" placeholder="{{ task.presoja }}" onchange="posodobiPodatke(this,{{ task.id }},'1', '{{ task.created_at }}')"></td>
-                    {% endif %}
-                </tr>
+    <div class="d-flex" style="padding: 10px; flex-direction: column">
+        {% csrf_token %}
+        <select class="form-select w-25" onchange="prikaziPodatke(this.value)">
+            <option disabled selected value> -- select an option -- </option>
+            {% for task in vsi_taski %}
+                <option value="{{ task.id }}">Projekt:{{ task.sprint.projekt.ime }}, Sprint:{{ task.sprint.ime }}, Naloga: {{ task.naloga.ime }}</option>
             {% endfor %}
+        </select>
+        <table class="table table-bordered w-50" style="margin-top:10px; display: none" id="table">
+            <thead>
+                <tr>
+                    <td>Datum</td>
+                    <td>Ure</td>
+                    <td>Ocena</td>
+                </tr>
+            </thead>
+            <tbody id="values" style="vertical-align: center">
+
             </tbody>
         </table>
     </div>
 {% endblock %}
 {% block scripts %}
     <script>
+        function prikaziPodatke(id) {
+            let csrftoken = $("input[type=hidden]").val();
+            $.ajax({
+                type:"GET",
+                url:"get_data/"+id+"/",
+                data:{
+                    "csrfmiddlewaretoken": csrftoken
+                },
+                success: function (data, status, xhr){
+                    $("#table").css("display","block");
+                    let values = $("#values");
+
+                    while (values.get(0).firstChild) {
+                        values.get(0).removeChild(values.get(0).lastChild);
+                    }
+
+                    for(let i = 0; i < data.length; i++){
+                        let row = document.createElement("tr");
+                        let datum = data[i][0];
+                        let ure = data[i][1];
+                        let ocena = data[i][2];
+                        let task_id = data[i][3];
+
+                        let table_data_datum = document.createElement("td");
+                        let table_data_ure = document.createElement("td");
+                        let table_data_presoja = document.createElement("td");
+
+                        let datum_container = document.createElement("p");
+                        datum_container.innerText = datum ;
+
+
+                        let input_ure = document.createElement("input");
+                        input_ure.classList = ["form-control"];
+                        input_ure.setAttribute("placeholder", ure);
+
+                        let input_ocena = document.createElement("input");
+                        input_ocena.classList = ["form-control"];
+                        input_ocena.setAttribute("placeholder", ocena);
+
+                        input_ure.addEventListener('change', function () {
+                            posodobiPodatke(input_ure,task_id, '0',data[i][4] ) ;
+                        });
+
+                        input_ocena.addEventListener('change', function (){
+                           posodobiPodatke(input_ocena,task_id, '1', data[i][4]);
+                        });
+
+                        table_data_ure.appendChild(input_ure);
+                        table_data_presoja.appendChild(input_ocena);
+                        table_data_datum.appendChild(datum_container);
+
+                        row.appendChild(table_data_datum);
+                        row.appendChild(table_data_ure);
+                        row.appendChild(table_data_presoja);
+
+                        values.append(row);
+                    }
+                }
+            })
+        }
         function posodobiPodatke(el, taskId, what, createdAt) {
             let csrftoken = $("input[type=hidden]").val();
-
+            console.log(createdAt);
             $.ajax({
-                type:"POST",
-                url:"update_data/"+taskId+"/",
-                data:{
+                type: "POST",
+                url: "update_data/" + taskId + "/",
+                data: {
                     "csrfmiddlewaretoken": csrftoken,
                     "taskId": taskId,
                     "what": what,

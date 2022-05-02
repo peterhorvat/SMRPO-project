@@ -166,8 +166,8 @@ class Naloga(models.Model):
     )
 
     ime = models.CharField(max_length=255, blank=True, null=True, verbose_name="Ime naloge")
-    clan = models.ForeignKey(Clan, null=True, blank=True,unique=False, on_delete=models.CASCADE, verbose_name="Član")
-    zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE,  verbose_name="Zgodba")
+    clan = models.ForeignKey(Clan, null=True, blank=True, unique=False, on_delete=models.CASCADE, verbose_name="Član")
+    zgodba = models.ForeignKey(Zgodba, on_delete=models.CASCADE, verbose_name="Zgodba")
     opis = RichTextField(verbose_name="Opis naloge")
     cas = models.IntegerField(verbose_name="Ocena časa")
     status = models.IntegerField(choices=PRIORITETE, verbose_name="Status naloge")
@@ -255,9 +255,9 @@ class Dokumentacija(models.Model):
 
 # NOT SURE KJE BOMO TO RABILI HAHA
 class BelezenjeCasa(models.Model):
-    clan = models.ForeignKey(Clan, on_delete=models.CASCADE, verbose_name="Član")
-    naloga = models.ForeignKey(Naloga, on_delete=models.CASCADE, verbose_name="Naloga")
-    sprint = models.ForeignKey(Sprint, on_delete=models.CASCADE, verbose_name="Sprint")
+    clan = models.ForeignKey(Clan, on_delete=models.DO_NOTHING, verbose_name="Član")
+    naloga = models.ForeignKey(Naloga, on_delete=models.DO_NOTHING, verbose_name="Naloga")
+    sprint = models.ForeignKey(Sprint, on_delete=models.DO_NOTHING, verbose_name="Sprint")
     zacetek = models.DateTimeField(verbose_name="Čas začetka")
     ure = models.IntegerField(verbose_name="Ure", default=0)
     presoja = models.IntegerField(verbose_name="Končna presoja", default=0)
@@ -291,3 +291,11 @@ class PastSprints(models.Model):
     sprint = models.ForeignKey(Sprint, on_delete=models.DO_NOTHING, verbose_name="Pretekli Sprint")
     zgodba = models.ForeignKey(Zgodba, on_delete=models.DO_NOTHING, verbose_name="Zgodba")
 
+
+class SelectedFirst(models.Model):
+    clan = models.ForeignKey(Clan, on_delete=models.DO_NOTHING, verbose_name="Clan")
+    naloga = models.ForeignKey(Naloga, on_delete=models.DO_NOTHING, verbose_name="Naloge")
+    sprint = models.ForeignKey(Sprint, on_delete=models.DO_NOTHING, verbose_name="Sprint")
+
+    class Meta:
+        unique_together = ["clan", "naloga", "sprint"]

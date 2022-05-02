@@ -47,7 +47,7 @@
             {% if task.clan.uporabnik == request.user %}
 
              <td class="col-2">
-                <a class="btn btn-danger" title="Zaključi z beleženjem časa." onclick="changeButton(this, {{ task.id }})">{% csrf_token %}<span><i class="fa fa-hourglass-end"></i></span></a>
+                <a class="btn btn-success" title="Prični z beleženjem časa." onclick="changeButton(this, {{ task.id }})">{% csrf_token %}<span><i class="fa fa-hourglass-start"></i></span></a>
             </td>
             <td class="col-2">
                 <a hx-get="{% url 'resign_task' task.id %}" class="link-danger">Odstopi</a>

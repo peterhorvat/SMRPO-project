@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta, date
+
 import pytz
 
 import django_otp
@@ -19,7 +20,7 @@ from .decorators import restrict_SM
 from .forms import UserLoginForm, CreateNewProjectForm, OTPForm, ZgodbaForm, UporabnikChangeForm, SprintForm, \
     EditSprintForm, NalogaForm, ZgodbaOpombeForm, ObjavaForm, EditSprintFormTekoci, KomentarForm, ZgodbaOcenaForm
 from .models import Uporabnik, Projekt, Zgodba, Clan, ProjectOwner, ScrumMaster, Sprint, Naloga, Objava, Komentar, \
-    BelezenjeCasa, PastSprints
+    BelezenjeCasa, PastSprints, SelectedFirst
 from itertools import filterfalse
 
 
@@ -615,25 +616,6 @@ def create_new_task(request, story_id):
 
 
 @login_required
-def accept_task(request, task_id):
-    task = Naloga.objects.get(id=task_id)
-    story = Zgodba.objects.get(id=task.zgodba_id)
-    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-    task.clan = clan
-    task.status = Naloga.ACCEPTED
-    task.save()
-    start_timer(request, task_id)
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
-    return HttpResponse(status=204,
-                        headers={
-                            'HX-Trigger': json.dumps({
-                                "taskAccepted": None,
-                            }),
-                            'HX-Redirect': url
-                        })
-
-
-@login_required
 def start_timer(request, task_id):
     print(request.POST)
     task = Naloga.objects.get(id=task_id)
@@ -667,13 +649,48 @@ def end_timer(request, task_id):
 @login_required
 def timetable(request):
     user = Uporabnik.objects.get(username=request.user.username)
-    return render(request, "timetable.html", {"tasks": BelezenjeCasa.objects.filter(clan__uporabnik=user)})
+    clan = Clan.objects.get(uporabnik_id=user.id)
+    all_tasks = [task for task in SelectedFirst.objects.filter(clan=clan)]
+
+    return render(request, "timetable.html", {"vsi_taski": all_tasks})
+
+
+def date_range_list(start_date, end_date):
+    # Return list of datetime.date objects between start_date and end_date (inclusive).
+    date_list = []
+    curr_date = start_date
+    while curr_date <= end_date:
+        date_list.append(curr_date)
+        curr_date += timedelta(days=1)
+    return date_list
+
+
+@login_required
+def getDataForTask(request, task_id):
+    task = SelectedFirst.objects.get(pk=task_id)
+    sprint_start = task.sprint.zacetni_cas
+    sprint_end = task.sprint.koncni_cas
+    dates = list(map(lambda x: x.strftime("%B %d, %Y - %H:%M:%S"), date_range_list(sprint_start, sprint_end)))
+    clan = Clan.objects.get(uporabnik=request.user, projekt=task.sprint.projekt)
+    belezen_cas = BelezenjeCasa.objects.filter(naloga=task.naloga, clan=clan)
+    data = []
+    for d in dates:
+        for zabelezeno in belezen_cas:
+            if datetime.strptime(d,"%B %d, %Y - %H:%M:%S").date() == zabelezeno.created_at.date():
+                created_at = zabelezeno.created_at.strftime("%B %d, %Y - %H:%M:%S")
+                print(created_at)
+                data.append((str(d), zabelezeno.ure, zabelezeno.presoja, zabelezeno.id, created_at))
+            else:
+                created_at = zabelezeno.created_at.strftime("%B %d, %Y - %H:%M:%S")
+                print(created_at)
+                data.append((str(d), 0, zabelezeno.presoja, zabelezeno.id, created_at))
+    return HttpResponse(content=json.dumps(data), content_type="application/json")
 
 
 @login_required
 def timetable_update(request, task_id):
     what_to_update = int(request.POST["what"])
-    beleziCas = BelezenjeCasa.objects.get(pk=int(task_id))
+    beleziCas = BelezenjeCasa.objects.get(pk=int(request.POST["taskId"]))
     if what_to_update == 0:
         if beleziCas.presoja != 0 and int(request.POST["value"]) >= beleziCas.presoja:
             beleziCas.ure += abs(int(request.POST["value"]) - beleziCas.presoja)
@@ -695,12 +712,32 @@ def timetable_update(request, task_id):
 
 
 @login_required
+def accept_task(request, task_id):
+    task = Naloga.objects.get(id=task_id)
+    story = Zgodba.objects.get(id=task.zgodba_id)
+    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
+    task.clan = clan
+    task.status = Naloga.ACCEPTED
+    task.save()
+    selected_first = SelectedFirst.objects.filter(clan=clan, naloga=task, sprint=story.sprint).first()
+    if selected_first is None:
+        SelectedFirst(clan=clan, naloga=task, sprint=story.sprint).save()
+    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
+    return HttpResponse(status=204,
+                        headers={
+                            'HX-Trigger': json.dumps({
+                                "taskAccepted": None,
+                            }),
+                            'HX-Redirect': url
+                        })
+
+
+@login_required
 def resign_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
     task.clan = None
     task.status = Naloga.NOT_ASSIGNED
     task.save()
-    end_timer(request, task_id)
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
@@ -718,7 +755,6 @@ def finish_task(request, task_id):
     task.save()
     story = Zgodba.objects.get(id=task.zgodba_id)
     clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-    end_timer(request, task_id)
     url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
     return HttpResponse(status=204,
                         headers={
@@ -727,6 +763,7 @@ def finish_task(request, task_id):
                             }),
                             'HX-Redirect': url
                         })
+
 
 @login_required
 def reopen_task(request, task_id):
