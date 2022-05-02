@@ -649,7 +649,7 @@ def end_timer(request, task_id):
 @login_required
 def timetable(request):
     user = Uporabnik.objects.get(username=request.user.username)
-    clan = Clan.objects.get(uporabnik_id=user.id)
+    clan = Clan.objects.filter(uporabnik_id=user.id).first()
     all_tasks = [task for task in SelectedFirst.objects.filter(clan=clan)]
 
     return render(request, "timetable.html", {"vsi_taski": all_tasks})
