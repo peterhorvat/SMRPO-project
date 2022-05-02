@@ -57,6 +57,7 @@ urlpatterns = [
     path("accept_task/<int:task_id>/", v.accept_task, name="accept_task"),
     path("resign_task/<int:task_id>/", v.resign_task, name="resign_task"),
     path("finish_task/<int:task_id>/", v.finish_task, name="finish_task"),
+    path("reopen_task/<int:task_id>/", v.reopen_task, name="reopen_task"),
     path("start_timer/<int:task_id>/", v.start_timer, name="start_timer"),
     path("end_timer/<int:task_id>/", v.end_timer, name="end_timer"),
     path('task/<int:pk>/edit', v.edit_task, name='edit_task'),

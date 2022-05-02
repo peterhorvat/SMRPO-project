@@ -768,19 +768,21 @@ def finish_task(request, task_id):
 @login_required
 def reopen_task(request, task_id):
     task = Naloga.objects.get(id=task_id)
-    task.status = 1
-    task.save()
     story = Zgodba.objects.get(id=task.zgodba_id)
-    clan = Clan.objects.get(projekt_id=story.projekt_id, uporabnik_id=request.user.id)
-    end_timer(request, task_id)
-    url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
-    return HttpResponse(status=204,
-                        headers={
-                            'HX-Trigger': json.dumps({
-                                "taskReopened": None,
-                            }),
-                            'HX-Redirect': url
-                        })
+    if Clan.objects.filter(projekt_id=story.projekt_id, uporabnik_id=request.user.id).first():
+        task.status = 1
+        task.save()
+        end_timer(request, task_id)
+        url = "http://" + request.get_host() + "/projects/" + str(task.zgodba.projekt_id) + "/sprint_backlog/"
+        return HttpResponse(status=204,
+                            headers={
+                                'HX-Trigger': json.dumps({
+                                    "taskReopened": None,
+                                }),
+                                'HX-Redirect': url
+                            })
+    else:
+        return HttpResponse(status=403)
 
 
 @login_required
